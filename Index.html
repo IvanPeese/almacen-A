@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Almacen A</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f0f0f0;min-height:100vh;font-size:14px}
+.hdr{background:#1a1a2e;color:#fff;padding:10px 14px;position:sticky;top:0;z-index:50;display:flex;align-items:center;justify-content:space-between}
+.hdr-title{font-size:15px;font-weight:600}
+.hdr-sub{font-size:10px;color:#8888aa;margin-top:1px}
+.hdr-btns{display:flex;gap:6px}
+.hbtn{border:none;font-size:11px;font-weight:700;padding:5px 10px;border-radius:6px;cursor:pointer}
+.hbtn-red{background:#e94560;color:#fff}
+.hbtn-gray{background:#2a2a4a;color:#aab}
+.tabs{display:flex;background:#16213e}
+.tab{flex:1;padding:10px 4px;font-size:11px;font-weight:600;color:#6677aa;text-align:center;cursor:pointer;letter-spacing:.04em;text-transform:uppercase;border-bottom:2px solid transparent;transition:all .15s}
+.tab.on{color:#e94560;border-bottom-color:#e94560}
+.body{padding:10px;max-width:600px;margin:0 auto}
+.stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px}
+.sc{background:#fff;border-radius:8px;padding:10px 8px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.sv{font-size:22px;font-weight:700;color:#1a1a2e}
+.sl{font-size:10px;color:#888;margin-top:2px;font-weight:500;text-transform:uppercase;letter-spacing:.04em}
+.sec-lbl{font-size:10px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
+.card{background:#fff;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,.08);overflow:hidden;margin-bottom:10px}
+.row{display:flex;align-items:center;padding:10px 12px;border-bottom:.5px solid #f0f0f0;gap:8px}
+.row:last-child{border-bottom:none}
+.rref{font-size:13px;font-weight:700;color:#1a1a2e}
+.rdesc{font-size:11px;color:#888;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:190px}
+.rmeta{font-size:10px;color:#aaa;margin-top:2px}
+.badge{display:inline-block;font-size:10px;font-weight:700;padding:3px 7px;border-radius:4px;white-space:nowrap}
+.bv{background:#fff0f0;color:#c0392b}
+.bg{background:#f0fff4;color:#27ae60}
+.bw{background:#fffbf0;color:#e67e22}
+.bp{background:#f0f4ff;color:#0f3460}
+.panel{display:none}
+.panel.on{display:block}
+.srch{width:100%;padding:11px 14px;font-size:15px;border:1.5px solid #ddd;border-radius:8px;background:#fff;color:#1a1a2e;margin-bottom:10px;outline:none}
+.srch:focus{border-color:#e94560}
+.chips{display:flex;gap:6px;margin-bottom:10px}
+.chip{font-size:11px;padding:5px 12px;border-radius:20px;border:1.5px solid #ddd;cursor:pointer;color:#666;background:#fff;font-weight:600}
+.chip.on{background:#1a1a2e;color:#fff;border-color:#1a1a2e}
+.rot-bg{height:5px;border-radius:3px;background:#f0f0f0;flex:1}
+.rot-fill{height:5px;border-radius:3px}
+.rank{font-size:11px;font-weight:700;color:#aaa;min-width:20px}
+.empty{text-align:center;padding:30px;color:#aaa;font-size:13px}
+.ubi-big{font-size:18px;font-weight:800;color:#0f3460;letter-spacing:.05em}
+.frow{display:flex;gap:6px;margin-bottom:10px;overflow-x:auto;padding-bottom:2px;-webkit-overflow-scrolling:touch}
+.frow::-webkit-scrollbar{display:none}
+.fp{font-size:10px;font-weight:700;padding:5px 10px;border-radius:6px;border:1.5px solid #ddd;cursor:pointer;white-space:nowrap;background:#fff;color:#666}
+.fp.on{background:#0f3460;color:#fff;border-color:#0f3460}
+/* Mark occupied button */
+.btn-occ{border:none;background:#e8f8ee;color:#27ae60;font-size:11px;font-weight:700;padding:7px 10px;border-radius:7px;cursor:pointer;white-space:nowrap;flex-shrink:0;line-height:1.2;text-align:center}
+.btn-occ:active{background:#27ae60;color:#fff}
+/* Occupied manually section */
+.sec-occupied{margin-top:4px}
+.row-occ{background:#f8fff8}
+.btn-undo{border:none;background:#f0f0f0;color:#888;font-size:10px;font-weight:700;padding:6px 9px;border-radius:6px;cursor:pointer;white-space:nowrap;flex-shrink:0}
+.btn-undo:active{background:#e0e0e0}
+/* Import modal */
+.overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.6);z-index:100;align-items:flex-end;justify-content:center}
+.overlay.on{display:flex}
+.sheet{background:#fff;border-radius:14px 14px 0 0;padding:20px 16px 32px;width:100%;max-width:500px}
+.sheet-title{font-size:15px;font-weight:700;color:#1a1a2e;margin-bottom:4px}
+.sheet-sub{font-size:12px;color:#888;margin-bottom:16px}
+.dropzone{border:2px dashed #ddd;border-radius:10px;padding:28px 16px;text-align:center;cursor:pointer;transition:all .15s;margin-bottom:12px}
+.dropzone:hover,.dropzone.drag{border-color:#e94560;background:#fff5f7}
+.dropzone-icon{font-size:32px;margin-bottom:8px}
+.dropzone-label{font-size:14px;font-weight:600;color:#1a1a2e;margin-bottom:4px}
+.dropzone-hint{font-size:11px;color:#aaa}
+.btn{width:100%;padding:12px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;border:none;margin-top:6px}
+.btn-secondary{background:#f0f0f0;color:#555}
+.progress{font-size:12px;color:#555;min-height:18px;margin-top:8px;text-align:center}
+.nodata{background:#fff8f0;border:1.5px solid #f0c070;border-radius:10px;padding:20px;text-align:center;margin-bottom:12px}
+.nodata-title{font-size:14px;font-weight:700;color:#b07000;margin-bottom:6px}
+.nodata-sub{font-size:12px;color:#a08040;margin-bottom:12px}
+.btn-import{background:#1a1a2e;color:#fff;padding:10px 20px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;border:none}
+/* Toast */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1a1a2e;color:#fff;font-size:13px;font-weight:600;padding:10px 20px;border-radius:20px;z-index:200;opacity:0;transition:opacity .2s;pointer-events:none;white-space:nowrap}
+.toast.show{opacity:1}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div><div class="hdr-title">Almacen A</div><div class="hdr-sub" id="hsub">Sin datos cargados</div></div>
+  <div class="hdr-btns">
+    <button class="hbtn hbtn-gray" onclick="openImport()">&#8593; Excel</button>
+  </div>
+</div>
+<div class="tabs">
+  <div class="tab on" onclick="sw(0)">Vacias</div>
+  <div class="tab" onclick="sw(1)">Rotacion</div>
+  <div class="tab" onclick="sw(2)">Buscar</div>
+</div>
+<div class="body">
+  <div id="pv" class="panel on">
+    <div class="stats" id="sRow"></div>
+    <div class="frow" id="vFil"></div>
+    <p class="sec-lbl" id="vacLbl" style="display:none">Ubicaciones vacias</p>
+    <div id="lV"></div>
+    <div id="secOcc" class="sec-occupied" style="display:none">
+      <p class="sec-lbl" style="margin-top:8px;color:#27ae60">Marcadas como ocupadas</p>
+      <div id="lOcc"></div>
+    </div>
+  </div>
+  <div id="pr" class="panel">
+    <div class="chips">
+      <div class="chip on" id="chM" onclick="setRot(0)">1 mes</div>
+      <div class="chip" id="chT" onclick="setRot(1)">3 meses</div>
+    </div>
+    <div class="frow" id="rFil"></div>
+    <p class="sec-lbl" id="rotLbl" style="display:none">Top picking por rotacion</p>
+    <div id="lR"></div>
+  </div>
+  <div id="pb" class="panel">
+    <input class="srch" id="si" type="search" placeholder="Codigo, descripcion o ubicacion..." oninput="doSearch(this.value)" autocomplete="off" autocorrect="off" spellcheck="false">
+    <div id="lB"><div class="empty">Escribe para buscar</div></div>
+  </div>
+</div>
+
+<div class="overlay" id="modal" onclick="closeIfBg(event)">
+  <div class="sheet">
+    <div class="sheet-title">Importar Excel</div>
+    <div class="sheet-sub">Selecciona el fichero Almacen_A.xlsx para actualizar los datos. Las ubicaciones marcadas como ocupadas se conservan.</div>
+    <div class="dropzone" id="dz" onclick="document.getElementById('fi').click()"
+         ondragover="event.preventDefault();this.classList.add('drag')"
+         ondragleave="this.classList.remove('drag')"
+         ondrop="handleDrop(event)">
+      <div class="dropzone-icon">&#128196;</div>
+      <div class="dropzone-label">Seleccionar fichero</div>
+      <div class="dropzone-hint">.xlsx</div>
+    </div>
+    <input type="file" id="fi" accept=".xlsx,.xls" style="display:none" onchange="handleFile(event)">
+    <div class="progress" id="prog"></div>
+    <button class="btn btn-secondary" onclick="closeImport()">Cerrar</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+var D=[], V=[];
+var rotMode=0, vacPas=0, rotPas=0;
+var STORAGE_KEY='almacenA_v1';
+var OCCUPIED_KEY='almacenA_occ_v1';
+
+// occupied = Set of ubi strings manually marked by operarios
+var manualOccupied={};
+
+function saveOccupied(){
+  try{localStorage.setItem(OCCUPIED_KEY,JSON.stringify(Object.keys(manualOccupied)));}catch(e){}
+}
+function loadOccupied(){
+  try{
+    var raw=localStorage.getItem(OCCUPIED_KEY);
+    if(!raw) return;
+    var arr=JSON.parse(raw);
+    for(var i=0;i<arr.length;i++) manualOccupied[arr[i]]=true;
+  }catch(e){}
+}
+function markOccupied(ubi){
+  manualOccupied[ubi]=true;
+  saveOccupied();
+  renderVacias();
+  renderStats();
+  showToast(ubi+' marcada como ocupada');
+}
+function unmarkOccupied(ubi){
+  delete manualOccupied[ubi];
+  saveOccupied();
+  renderVacias();
+  renderStats();
+  showToast(ubi+' devuelta a vacias');
+}
+
+function showToast(msg){
+  var t=document.getElementById('toast');
+  t.textContent=msg;
+  t.className='toast show';
+  setTimeout(function(){t.className='toast';},2000);
+}
+
+function pad2(n){return n<10?'0'+n:String(n);}
+
+// ---- IMPORT ----
+function openImport(){document.getElementById('modal').className='overlay on';}
+function closeImport(){document.getElementById('modal').className='overlay';}
+function closeIfBg(e){if(e.target===document.getElementById('modal'))closeImport();}
+function handleDrop(e){
+  e.preventDefault();
+  document.getElementById('dz').classList.remove('drag');
+  var f=e.dataTransfer.files[0];
+  if(f) processFile(f);
+}
+function handleFile(e){var f=e.target.files[0];if(f)processFile(f);e.target.value='';}
+function setProgress(msg){document.getElementById('prog').textContent=msg;}
+
+function processFile(file){
+  setProgress('Leyendo fichero...');
+  var reader=new FileReader();
+  reader.onload=function(ev){
+    try{
+      setProgress('Procesando...');
+      var wb=XLSX.read(ev.target.result,{type:'array'});
+      var ws=wb.Sheets[wb.SheetNames[0]];
+      var rows=XLSX.utils.sheet_to_json(ws,{defval:''});
+      if(!rows.length){setProgress('El fichero parece vacio.');return;}
+      var result=buildData(rows);
+      D=result.d; V=result.v;
+      var ts=new Date().toLocaleString('es-ES');
+      try{localStorage.setItem(STORAGE_KEY,JSON.stringify({d:D,v:V,ts:ts}));}catch(e){}
+      updateHeader(D.length,ts);
+      renderAll();
+      setProgress(rows.length+' referencias cargadas.');
+      setTimeout(function(){closeImport();setProgress('');},1200);
+    }catch(err){setProgress('Error: '+err.message);console.error(err);}
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+// ---- DATA PROCESSING ----
+function parseUbi(ubi){
+  if(!ubi||typeof ubi!=='string') return null;
+  ubi=ubi.trim();
+  if(!ubi.startsWith('A')||ubi==='ALTILLOES'||ubi.startsWith('AA')) return null;
+  try{
+    var p=parseInt(ubi.substring(1,3),10);
+    var c=parseInt(ubi.substring(3,5),10);
+    var n=ubi.length>5?parseInt(ubi[5],10):0;
+    if(isNaN(p)||isNaN(c)||isNaN(n)) return null;
+    return {p:p,c:c,n:n};
+  }catch(e){return null;}
+}
+
+function buildData(rows){
+  var data=[];
+  var occupied={};
+  var keys=Object.keys(rows[0]);
+  function col(){
+    var args=Array.prototype.slice.call(arguments);
+    for(var i=0;i<args.length;i++)
+      for(var j=0;j<keys.length;j++)
+        if(keys[j].toLowerCase().indexOf(args[i].toLowerCase())>=0) return keys[j];
+    return null;
+  }
+  var kCod=col('Codigo','Code','SKU','Ref')||keys[0];
+  var kDesc=col('Descripcion','Descripci','Nombre')||keys[1];
+  var kUbi=col('UbicacionCorregida','Ubicacion','Ubic','Loc')||keys[2];
+  var kRotM=col('UDS_1Mes','1Mes','Mensual')||null;
+  var kRotT=col('UDS_3Meses','3Mes','Trimestral')||null;
+  var kVol=col('Volumen','Vol')||null;
+  var kPeso=col('Peso','Weight')||null;
+  var kEx=col('Existencias','Exist','Stock')||null;
+  var kCat=col('Catalogo','Cat')||null;
+
+  for(var i=0;i<rows.length;i++){
+    var r=rows[i];
+    var ubi=String(r[kUbi]||'').trim();
+    var parsed=parseUbi(ubi);
+    var isPicking=0, zona=null;
+    if(parsed){
+      zona=parsed.p<=5?'P':'G';
+      if(parsed.p>=1&&parsed.p<=5&&(parsed.n===0||parsed.n===1)) isPicking=1;
+      if(parsed.p>=6&&parsed.p<=16&&parsed.n===0) isPicking=1;
+      if(isPicking){var key=parsed.p+','+parsed.c+','+parsed.n;occupied[key]=true;}
+    }
+    data.push([
+      String(r[kCod]||''),
+      String(r[kDesc]||'').substring(0,55),
+      ubi,
+      parsed?parsed.p:null,
+      parsed?parsed.c:null,
+      parsed?parsed.n:null,
+      isPicking,
+      zona,
+      kRotM?parseInt(r[kRotM])||0:0,
+      kRotT?parseInt(r[kRotT])||0:0,
+      kVol?parseFloat(r[kVol])||0:0,
+      kPeso?parseFloat(r[kPeso])||0:0,
+      kEx?parseInt(r[kEx])||0:0,
+      kCat?String(r[kCat]||''):''
+    ]);
+  }
+
+  var vacias=[];
+  var byP={};
+  for(var key in occupied){
+    var parts=key.split(',');
+    var pp=parseInt(parts[0]),cc=parseInt(parts[1]),nn=parseInt(parts[2]);
+    if(!byP[pp]) byP[pp]={};
+    byP[pp][cc+','+nn]=true;
+  }
+  var ps=Object.keys(byP).map(Number).sort(function(a,b){return a-b;});
+  for(var pi=0;pi<ps.length;pi++){
+    var pp=ps[pi];
+    var allC=Object.keys(byP[pp]).map(function(k){return parseInt(k.split(',')[0]);});
+    allC.sort(function(a,b){return a-b;});
+    var minC=allC[0], maxC=allC[allC.length-1];
+    var z=pp<=5?'P':'G';
+    for(var cc=minC;cc<=maxC;cc++){
+      if(pp>=1&&pp<=5){
+        for(var nn=0;nn<=1;nn++){
+          if(!byP[pp][cc+','+nn]) vacias.push(['A'+pad2(pp)+pad2(cc)+nn,pp,z]);
+        }
+      } else {
+        if(!byP[pp][cc+',0']) vacias.push(['A'+pad2(pp)+pad2(cc)+'0',pp,z]);
+      }
+    }
+  }
+  return {d:data,v:vacias};
+}
+
+// ---- UI ----
+function sw(t){
+  var ids=['pv','pr','pb'];
+  for(var i=0;i<3;i++){
+    document.getElementById(ids[i]).className='panel'+(i===t?' on':'');
+    document.querySelectorAll('.tab')[i].className='tab'+(i===t?' on':'');
+  }
+}
+function updateHeader(n,ts){
+  document.getElementById('hsub').textContent=n+' referencias \u00b7 '+ts;
+}
+function showNoData(elId){
+  document.getElementById(elId).innerHTML=
+    '<div class="nodata"><div class="nodata-title">Sin datos cargados</div>'+
+    '<div class="nodata-sub">Importa el fichero Excel para ver informacion.</div>'+
+    '<button class="btn-import" onclick="openImport()">Importar Excel</button></div>';
+}
+function renderAll(){
+  renderStats();
+  renderVacFilter();
+  renderVacias();
+  renderRotFilter();
+  renderRot();
+  document.getElementById('vacLbl').style.display='block';
+  document.getElementById('rotLbl').style.display='block';
+}
+
+function renderStats(){
+  if(!D.length){document.getElementById('sRow').innerHTML='';showNoData('lV');return;}
+  var occ=new Set(D.map(function(r){return r[2];})).size;
+  var manCount=Object.keys(manualOccupied).length;
+  // vacias = V minus manually occupied
+  var realVacias=V.filter(function(v){return !manualOccupied[v[0]];}).length;
+  var tot=occ+V.length;
+  var pct=Math.round((occ+manCount)/tot*100);
+  document.getElementById('sRow').innerHTML=
+    '<div class="sc"><div class="sv" style="color:#c0392b">'+realVacias+'</div><div class="sl">Vacias</div></div>'+
+    '<div class="sc"><div class="sv">'+occ+'</div><div class="sl">Ocupadas</div></div>'+
+    '<div class="sc"><div class="sv" style="color:#27ae60">'+pct+'%</div><div class="sl">Ocupacion</div></div>';
+}
+
+function renderVacFilter(){
+  if(!V.length){document.getElementById('vFil').innerHTML='';return;}
+  var ps=[0];
+  for(var i=0;i<V.length;i++){if(!manualOccupied[V[i][0]]&&ps.indexOf(V[i][1])<0)ps.push(V[i][1]);}
+  ps.sort(function(a,b){return a-b;});
+  var h='';
+  for(var i=0;i<ps.length;i++){
+    var p=ps[i];
+    h+='<div class="fp'+(p===vacPas?' on':'')+'" onclick="setVP('+p+')">'+(p===0?'Todos':'P'+pad2(p))+'</div>';
+  }
+  document.getElementById('vFil').innerHTML=h;
+}
+function setVP(p){vacPas=p;renderVacFilter();renderVacias();}
+
+function renderVacias(){
+  if(!D.length){showNoData('lV');document.getElementById('secOcc').style.display='none';return;}
+  var open=V.filter(function(v){return !manualOccupied[v[0]]&&(!vacPas||v[1]===vacPas);});
+  var closed=V.filter(function(v){return manualOccupied[v[0]]&&(!vacPas||v[1]===vacPas);});
+
+  var el=document.getElementById('lV');
+  if(!open.length){
+    el.innerHTML='<div class="empty">No quedan ubicaciones vacias'+(vacPas?' en P'+pad2(vacPas):'')+' &#127881;</div>';
+  } else {
+    var h='<div class="card">';
+    for(var i=0;i<open.length;i++){
+      var v=open[i];
+      var zona=v[2]==='P'?'Pequeno':'Grande';
+      h+='<div class="row">'+
+         '<div style="flex:1">'+
+           '<div class="ubi-big">'+v[0]+'</div>'+
+           '<div class="rmeta">P'+pad2(v[1])+' &middot; '+zona+'</div>'+
+         '</div>'+
+         '<button class="btn-occ" onclick="markOccupied(\''+v[0]+'\')">&#10003; Ocupar</button>'+
+         '</div>';
+    }
+    h+='</div>';
+    el.innerHTML=h;
+  }
+
+  // Manually occupied section
+  var secEl=document.getElementById('secOcc');
+  if(!closed.length){secEl.style.display='none';return;}
+  secEl.style.display='block';
+  var h2='<div class="card">';
+  for(var i=0;i<closed.length;i++){
+    var v=closed[i];
+    var zona=v[2]==='P'?'Pequeno':'Grande';
+    h2+='<div class="row row-occ">'+
+        '<div style="flex:1">'+
+          '<div class="ubi-big" style="color:#27ae60;font-size:16px">'+v[0]+'</div>'+
+          '<div class="rmeta">P'+pad2(v[1])+' &middot; '+zona+'</div>'+
+        '</div>'+
+        '<span class="badge bg" style="margin-right:6px">Ocupada</span>'+
+        '<button class="btn-undo" onclick="unmarkOccupied(\''+v[0]+'\')">Deshacer</button>'+
+        '</div>';
+  }
+  h2+='</div>';
+  document.getElementById('lOcc').innerHTML=h2;
+}
+
+function renderRotFilter(){
+  if(!D.length){document.getElementById('rFil').innerHTML='';return;}
+  var h='<div class="fp'+(rotPas===0?' on':'')+'" onclick="setRP(0)">Todos</div>';
+  for(var p=1;p<=16;p++){
+    h+='<div class="fp'+(p===rotPas?' on':'')+'" onclick="setRP('+p+')">P'+pad2(p)+'</div>';
+  }
+  document.getElementById('rFil').innerHTML=h;
+}
+function setRP(p){rotPas=p;renderRotFilter();renderRot();}
+function setRot(m){
+  rotMode=m;
+  document.getElementById('chM').className='chip'+(m===0?' on':'');
+  document.getElementById('chT').className='chip'+(m===1?' on':'');
+  renderRot();
+}
+function renderRot(){
+  if(!D.length){showNoData('lR');return;}
+  var list=D.filter(function(r){return r[6]===1;});
+  if(rotPas) list=list.filter(function(r){return r[3]===rotPas;});
+  list=list.slice().sort(function(a,b){return rotMode===0?b[8]-a[8]:b[9]-a[9];}).slice(0,40);
+  var maxR=list.length?(rotMode===0?list[0][8]:list[0][9]):1;
+  if(!maxR) maxR=1;
+  var el=document.getElementById('lR');
+  if(!list.length){el.innerHTML='<div class="empty">Sin datos</div>';return;}
+  var h='<div class="card">';
+  for(var i=0;i<list.length;i++){
+    var r=list[i];
+    var rot=rotMode===0?r[8]:r[9];
+    var pct=Math.round(rot/maxR*100);
+    var clr=pct>66?'#e94560':pct>33?'#e67e22':'#27ae60';
+    h+='<div class="row">'+
+       '<span class="rank">'+(i+1)+'</span>'+
+       '<div style="flex:1;min-width:0;padding:0 8px">'+
+         '<div style="display:flex;align-items:center;gap:6px">'+
+           '<span class="rref">'+r[0]+'</span>'+
+           '<span class="badge bp" style="font-size:9px">P'+pad2(r[3])+'</span>'+
+         '</div>'+
+         '<div class="rdesc">'+r[1]+'</div>'+
+         '<div style="display:flex;align-items:center;margin-top:4px">'+
+           '<div class="rot-bg"><div class="rot-fill" style="width:'+pct+'%;background:'+clr+'"></div></div>'+
+         '</div>'+
+       '</div>'+
+       '<div style="text-align:right;min-width:40px">'+
+         '<div style="font-size:14px;font-weight:700;color:#1a1a2e">'+rot+'</div>'+
+         '<div style="font-size:9px;color:#aaa">'+(rotMode===0?'/mes':'/trim')+'</div>'+
+       '</div>'+
+    '</div>';
+  }
+  h+='</div>';
+  el.innerHTML=h;
+}
+
+function doSearch(q){
+  var el=document.getElementById('lB');
+  if(!D.length){showNoData('lB');return;}
+  if(!q||q.length<2){el.innerHTML='<div class="empty">Escribe para buscar</div>';return;}
+  var ql=q.toLowerCase();
+  var res=[];
+  for(var i=0;i<D.length&&res.length<25;i++){
+    var r=D[i];
+    if(r[0].toLowerCase().indexOf(ql)>=0||r[1].toLowerCase().indexOf(ql)>=0||r[2].toLowerCase().indexOf(ql)>=0) res.push(r);
+  }
+  if(!res.length){el.innerHTML='<div class="empty">Sin resultados para "'+q+'"</div>';return;}
+  var h='<div class="card">';
+  for(var i=0;i<res.length;i++){
+    var r=res[i];
+    var pickBadge=r[6]?'<span class="badge bg" style="font-size:9px">Picking</span>':'';
+    var zona=r[7]==='P'?'pequeno':'grande';
+    h+='<div class="row">'+
+       '<div style="flex:1;min-width:0">'+
+         '<div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap">'+
+           '<span class="rref">'+r[0]+'</span>'+pickBadge+
+           '<span class="badge bp" style="font-size:9px">'+r[2]+'</span>'+
+         '</div>'+
+         '<div class="rdesc">'+r[1]+'</div>'+
+         '<div class="rmeta">Rot/mes: '+r[8]+' &middot; Exist: '+r[12]+' &middot; '+zona+'</div>'+
+       '</div>'+
+    '</div>';
+  }
+  h+='</div>';
+  el.innerHTML=h;
+}
+
+// ---- INIT ----
+(function init(){
+  loadOccupied();
+  try{
+    var raw=localStorage.getItem(STORAGE_KEY);
+    if(raw){
+      var saved=JSON.parse(raw);
+      if(saved&&saved.d&&saved.d.length){
+        D=saved.d; V=saved.v||[];
+        updateHeader(D.length,saved.ts||'');
+        renderAll();
+        return;
+      }
+    }
+  }catch(e){}
+  showNoData('lV');
+  showNoData('lR');
+})();
+</script>
+</body>
+</html>
