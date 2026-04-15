@@ -202,6 +202,17 @@ function parseUbi(ubi){
   }catch(e){return null;}
 }
 
+var RESTRICTED={
+  'A06070':1,'A06071':1,'A06072':1,
+  'A06140':1,'A06141':1,'A06142':1,
+  'A06210':1,'A06211':1,'A06212':1,
+  'A06280':1,'A06281':1,'A06282':1,
+  'A06350':1,'A06351':1,'A06352':1,
+  'A11130':1,'A11131':1,'A11132':1,
+  'A11200':1,'A11201':1,'A11202':1,
+  'A11270':1,'A11271':1,'A11272':1
+};
+
 function buildVacias(occupied){
   var byP={};
   for(var key in occupied){
@@ -217,8 +228,8 @@ function buildVacias(occupied){
     allC.sort(function(a,b){return a-b;});
     var minC=allC[0], maxC=allC[allC.length-1], z=pp<=5?'P':'G';
     for(var cc=minC;cc<=maxC;cc++){
-      if(pp>=1&&pp<=5){for(var nn=0;nn<=1;nn++){if(!byP[pp][cc+','+nn])vacias.push(['A'+pad2(pp)+pad2(cc)+nn,pp,z]);}}
-      else{if(!byP[pp][cc+',0'])vacias.push(['A'+pad2(pp)+pad2(cc)+'0',pp,z]);}
+      if(pp>=1&&pp<=5){for(var nn=0;nn<=1;nn++){var u='A'+pad2(pp)+pad2(cc)+nn;if(!byP[pp][cc+','+nn]&&!RESTRICTED[u])vacias.push([u,pp,z]);}}
+      else{var u='A'+pad2(pp)+pad2(cc)+'0';if(!byP[pp][cc+',0']&&!RESTRICTED[u])vacias.push([u,pp,z]);}
     }
   }
   return vacias;
