@@ -145,13 +145,70 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <script>
 var D=[], V=[];
 var rotMode=0, vacPas=0, rotPas=0;
-var OCCUPIED_KEY='almacenA_occ_v1';
+var SUPA_URL='https://chvfagljjkpvmdajnjvx.supabase.co';
+var SUPA_KEY='sb_publishable_tl-zl-7THPOwQZGQ46qlJg_QB5jeFMd';
 var manualOccupied={};
 
-function saveOccupied(){try{localStorage.setItem(OCCUPIED_KEY,JSON.stringify(Object.keys(manualOccupied)));}catch(e){}}
-function loadOccupied(){try{var a=JSON.parse(localStorage.getItem(OCCUPIED_KEY)||'[]');for(var i=0;i<a.length;i++)manualOccupied[a[i]]=true;}catch(e){}}
-function markOccupied(u){manualOccupied[u]=true;saveOccupied();renderVacias();renderStats();showToast(u+' marcada como ocupada');}
-function unmarkOccupied(u){delete manualOccupied[u];saveOccupied();renderVacias();renderStats();showToast(u+' devuelta a vacias');}
+function supaFetch(method, path, body){
+  var opts={method:method, headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/json','Prefer':'return=minimal'}};
+  if(body) opts.body=JSON.stringify(body);
+  return fetch(SUPA_URL+'/rest/v1/'+path, opts);
+}
+
+function loadOccupied(){
+  supaFetch('GET','ocupadas?select=ubicacion')
+    .then(function(r){return r.json();})
+    .then(function(rows){
+      manualOccupied={};
+      for(var i=0;i<rows.length;i++) manualOccupied[rows[i].ubicacion]=true;
+      renderVacias();
+      renderStats();
+    })
+    .catch(function(e){console.warn('Supabase load error:',e);});
+}
+
+function markOccupied(u){
+  supaFetch('POST','ocupadas',{ubicacion:u, marcada_por:'Operario'})
+    .then(function(){
+      manualOccupied[u]=true;
+      renderVacias();
+      renderStats();
+      showToast(u+' marcada como ocupada');
+    })
+    .catch(function(e){showToast('Error al guardar');console.error(e);});
+}
+
+function unmarkOccupied(u){
+  supaFetch('DELETE','ocupadas?ubicacion=eq.'+encodeURIComponent(u))
+    .then(function(){
+      delete manualOccupied[u];
+      renderVacias();
+      renderStats();
+      showToast(u+' devuelta a vacias');
+    })
+    .catch(function(e){showToast('Error al desmarcar');console.error(e);});
+}
+
+function syncOccupiedWithCSV(){
+  // When CSV loads, remove marks for locations that are now occupied in CSV
+  var vaciaSet={};
+  for(var i=0;i<V.length;i++) vaciaSet[V[i][0]]=true;
+  var toDelete=[];
+  for(var u in manualOccupied){
+    if(!vaciaSet[u]) toDelete.push(u);
+  }
+  for(var i=0;i<toDelete.length;i++){
+    supaFetch('DELETE','ocupadas?ubicacion=eq.'+encodeURIComponent(toDelete[i]));
+    delete manualOccupied[toDelete[i]];
+  }
+}
+
+// Realtime subscription
+function subscribeRealtime(){
+  var es=new EventSource(SUPA_URL+'/realtime/v1/api/broadcast?apikey='+SUPA_KEY);
+  // Poll every 30s as lightweight realtime fallback
+  setInterval(function(){loadOccupied();}, 30000);
+}
 function showToast(msg){var t=document.getElementById('toast');t.textContent=msg;t.className='toast show';setTimeout(function(){t.className='toast';},2200);}
 function pad2(n){return n<10?'0'+n:String(n);}
 
@@ -165,6 +222,7 @@ function fetchCSV(){
       var result=parseCSV(txt);
       D=result.d; V=result.v;
       updateHeader(D.length);
+      syncOccupiedWithCSV();
       renderAll();
     })
     .catch(function(err){
@@ -444,8 +502,9 @@ function openDetail(idx){
 function closeDetail(e){if(e.target===document.getElementById('detailModal'))document.getElementById('detailModal').className='overlay';}
 
 // ---- INIT ----
-loadOccupied();
 fetchCSV();
+loadOccupied();
+subscribeRealtime();
 </script>
 <script>
 // Force pinch zoom on Edge Android
