@@ -55,6 +55,18 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .loading-txt{font-size:13px;color:#888}
 .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1a1a2e;color:#fff;font-size:13px;font-weight:600;padding:10px 20px;border-radius:20px;z-index:200;opacity:0;transition:opacity .2s;pointer-events:none;white-space:nowrap}
 .toast.show{opacity:1}
+.overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.6);z-index:100;align-items:flex-end;justify-content:center}
+.overlay.on{display:flex}
+.sheet{background:#fff;border-radius:14px 14px 0 0;padding:20px 16px 32px;width:100%;max-width:500px}
+.sheet-title{font-size:13px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
+.detail-ref{font-size:24px;font-weight:800;color:#1a1a2e;margin-bottom:4px}
+.detail-desc{font-size:13px;color:#666;margin-bottom:16px;line-height:1.4}
+.detail-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:.5px solid #f0f0f0}
+.detail-row:last-child{border-bottom:none}
+.detail-lbl{font-size:12px;color:#aaa;font-weight:500}
+.detail-val{font-size:14px;font-weight:700;color:#1a1a2e}
+.detail-ubi{font-size:22px;font-weight:800;color:#0f3460;letter-spacing:.05em}
+.btn-close{width:100%;padding:12px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;border:none;background:#f0f0f0;color:#555;margin-top:16px}
 .err-banner{background:#fff0f0;border:1.5px solid #f0b0b0;border-radius:8px;padding:14px;margin-bottom:10px;font-size:12px;color:#c0392b}
 .err-banner b{display:block;margin-bottom:4px;font-size:13px}
 </style>
@@ -96,6 +108,39 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 </div>
 
 <div class="toast" id="toast"></div>
+
+<div class="overlay" id="detailModal" onclick="closeDetail(event)">
+  <div class="sheet" id="detailSheet">
+    <div class="sheet-title">Referencia</div>
+    <div class="detail-ref" id="dRef"></div>
+    <div class="detail-desc" id="dDesc"></div>
+    <div class="detail-row">
+      <span class="detail-lbl">Ubicacion picking</span>
+      <span class="detail-ubi" id="dUbi"></span>
+    </div>
+    <div class="detail-row">
+      <span class="detail-lbl">Pasillo</span>
+      <span class="detail-val" id="dPas"></span>
+    </div>
+    <div class="detail-row">
+      <span class="detail-lbl">Zona</span>
+      <span class="detail-val" id="dZona"></span>
+    </div>
+    <div class="detail-row">
+      <span class="detail-lbl">Rotacion mensual</span>
+      <span class="detail-val" id="dRotM"></span>
+    </div>
+    <div class="detail-row">
+      <span class="detail-lbl">Rotacion trimestral</span>
+      <span class="detail-val" id="dRotT"></span>
+    </div>
+    <div class="detail-row">
+      <span class="detail-lbl">Existencias</span>
+      <span class="detail-val" id="dEx"></span>
+    </div>
+    <button class="btn-close" onclick="document.getElementById('detailModal').className='overlay'">Cerrar</button>
+  </div>
+</div>
 
 <script>
 var D=[], V=[];
@@ -270,7 +315,7 @@ function renderStats(){
   var manCount=Object.keys(manualOccupied).length;
   var realVacias=V.filter(function(v){return !manualOccupied[v[0]];}).length;
   var tot=occ+V.length;
-  var pct=tot?Math.round((occ+manCount)/tot*100):0;
+  var pct=tot?Math.round((occ+manCount)/tot*1000)/10:0;
   document.getElementById('sRow').innerHTML=
     '<div class="sc"><div class="sv" style="color:#c0392b">'+realVacias+'</div><div class="sl">Vacias</div></div>'+
     '<div class="sc"><div class="sv">'+occ+'</div><div class="sl">Ocupadas</div></div>'+
@@ -344,7 +389,7 @@ function renderRot(){
   for(var i=0;i<list.length;i++){
     var r=list[i], rot=rotMode===0?r[8]:r[9], pct=Math.round(rot/maxR*100);
     var clr=pct>66?'#e94560':pct>33?'#e67e22':'#27ae60';
-    h+='<div class="row"><span class="rank">'+(i+1)+'</span>'+
+    h+='<div class="row" onclick="openDetail('+D.indexOf(r)+')" style="cursor:pointer"><span class="rank">'+(i+1)+'</span>'+
        '<div style="flex:1;min-width:0;padding:0 8px">'+
          '<div style="display:flex;align-items:center;gap:6px"><span class="rref">'+r[0]+'</span>'+
          '<span class="badge bp" style="font-size:9px">P'+pad2(r[3])+'</span></div>'+
@@ -382,6 +427,21 @@ function doSearch(q){
   }
   el.innerHTML=h+'</div>';
 }
+
+// ---- DETAIL MODAL ----
+function openDetail(idx){
+  var r=D[idx];
+  document.getElementById('dRef').textContent=r[0];
+  document.getElementById('dDesc').textContent=r[1];
+  document.getElementById('dUbi').textContent=r[2]||'Sin ubicacion';
+  document.getElementById('dPas').textContent=r[3]?'Pasillo '+pad2(r[3]):'—';
+  document.getElementById('dZona').textContent=r[7]==='P'?'Pequeno (P01-P05)':r[7]==='G'?'Grande (P06-P16)':'—';
+  document.getElementById('dRotM').textContent=r[8]+' uds/mes';
+  document.getElementById('dRotT').textContent=r[9]+' uds/trimestre';
+  document.getElementById('dEx').textContent=r[12]+' uds';
+  document.getElementById('detailModal').className='overlay on';
+}
+function closeDetail(e){if(e.target===document.getElementById('detailModal'))document.getElementById('detailModal').className='overlay';}
 
 // ---- INIT ----
 loadOccupied();
