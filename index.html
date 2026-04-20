@@ -2,11 +2,11 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=5.0, user-scalable=yes">
 <title>Almacen A</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f0f0f0;min-height:100vh;font-size:14px}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f0f0f0;min-height:100vh;font-size:14px;touch-action:pan-x pan-y pinch-zoom}
 .hdr{background:#1a1a2e;color:#fff;padding:10px 14px;position:sticky;top:0;z-index:50;display:flex;align-items:center;justify-content:space-between}
 .hdr-title{font-size:15px;font-weight:600}
 .hdr-sub{font-size:10px;color:#8888aa;margin-top:1px}
@@ -446,6 +446,36 @@ function closeDetail(e){if(e.target===document.getElementById('detailModal'))doc
 // ---- INIT ----
 loadOccupied();
 fetchCSV();
+</script>
+<script>
+// Force pinch zoom on Edge Android
+(function(){
+  var lastScale=1, lastX=0, lastY=0;
+  var meta=document.querySelector('meta[name=viewport]');
+  function setZoom(scale,x,y){
+    scale=Math.min(Math.max(scale,1),5);
+    meta.setAttribute('content','width=device-width, initial-scale='+scale+', minimum-scale=1.0, maximum-scale=5.0, user-scalable=yes');
+  }
+  var startDist=0;
+  document.addEventListener('touchstart',function(e){
+    if(e.touches.length===2){
+      startDist=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);
+    }
+  },{passive:true});
+  document.addEventListener('touchmove',function(e){
+    if(e.touches.length===2){
+      var dist=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);
+      var scale=lastScale*(dist/startDist);
+      setZoom(scale);
+    }
+  },{passive:true});
+  document.addEventListener('touchend',function(e){
+    var meta=document.querySelector('meta[name=viewport]');
+    var content=meta.getAttribute('content');
+    var match=content.match(/initial-scale=([\d.]+)/);
+    if(match) lastScale=parseFloat(match[1]);
+  },{passive:true});
+})();
 </script>
 </body>
 </html>
