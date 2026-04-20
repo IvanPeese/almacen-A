@@ -289,7 +289,7 @@ function renderVacFilter(){
 function setVP(p){vacPas=p;renderVacFilter();renderVacias();}
 
 function renderVacias(){
-  var open=V.filter(function(v){return !manualOccupied[v[0]]&&(!vacPas||v[1]===vacPas);});
+  var open=V.filter(function(v){return !manualOccupied[v[0]]&&!RESTRICTED[v[0]]&&(!vacPas||v[1]===vacPas);});
   var closed=V.filter(function(v){return manualOccupied[v[0]]&&(!vacPas||v[1]===vacPas);});
   var el=document.getElementById('lV');
   if(!open.length){
