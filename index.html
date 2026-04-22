@@ -255,11 +255,24 @@ function parseCSVLine(line, sep){
   return result;
 }
 
+function splitCSVRows(txt){
+  // Split CSV respecting quoted fields that may contain newlines
+  var rows=[], cur='', inQ=false;
+  for(var i=0;i<txt.length;i++){
+    var c=txt[i];
+    if(c==='"') inQ=!inQ;
+    else if((c==='\n')&&!inQ){rows.push(cur);cur='';continue;}
+    cur+=c;
+  }
+  if(cur) rows.push(cur);
+  return rows;
+}
+
 function toFloat(s){return parseFloat(String(s||'0').replace(',','.').replace(/[^0-9.\-]/g,''))||0;}
 function toInt(s){return parseInt(String(s||'0').replace(',','.'))||0;}
 
 function parseCSV(txt){
-  var lines=txt.replace(/\r\n/g,'\n').replace(/\r/g,'\n').split('\n');
+  var lines=splitCSVRows(txt);
   var headers=parseCSVLine(lines[0],';');
 
   // find column indexes by name
@@ -515,7 +528,7 @@ var sobPasFilter=0;
 function parseSobrestockFromCSV(txt){
   var occupied=new Set();
   var usedAsPicking=new Set();
-  var lines=txt.split('\n');
+  var lines=splitCSVRows(txt);
   var headers=parseCSVLine(lines[0],';');
   var iAlt1=headers.indexOf('UbicacionCodigoAlt1');
   var iAlt2=headers.indexOf('UbicacionCodigoAlt2');
@@ -540,7 +553,7 @@ function parseSobrestockFromCSV(txt){
       var s=alts[j];
       for(var k=0;k<s.length-5;k++){
         if(s[k]==='A'){
-          var raw=s.substring(k,k+9).replace(/ /g,'');
+          var raw=s.substring(k,k+9).replace(/ /g,'').replace(/\n/g,'').replace(/\r/g,'');
           if(raw.length>=6&&raw[0]==='A'&&
              raw[1]>='0'&&raw[1]<='9'&&raw[2]>='0'&&raw[2]<='9'&&
              raw[3]>='0'&&raw[3]<='9'&&raw[4]>='0'&&raw[4]<='9'&&
