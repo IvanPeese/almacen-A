@@ -145,80 +145,47 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <script>
 var D=[], V=[];
 var rotMode=0, vacPas=0, rotPas=0;
-var SUPA_URL='https://chvfagljjkpvmdajnjvx.supabase.co';
-var SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNodmZhZ2xqamtwdm1kYWpuanZ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY2Nzc0MDEsImV4cCI6MjA5MjI1MzQwMX0.Hts6bUJz9yEd70RnPrBfLfuVyt_rFw_r1Xh3E59hg-Q';
+var OCCUPIED_KEY='almacenA_occ_v1';
 var manualOccupied={};
 
-function supaFetch(method, path, body){
-  var headers={
-    'apikey':SUPA_KEY,
-    'Authorization':'Bearer '+SUPA_KEY,
-    'Content-Type':'application/json'
-  };
-  if(method==='POST') headers['Prefer']='return=representation';
-  var opts={method:method, headers:headers};
-  if(body) opts.body=JSON.stringify(body);
-  return fetch(SUPA_URL+'/rest/v1/'+path, opts);
+function loadOccupied(){
+  try{
+    var arr=JSON.parse(localStorage.getItem(OCCUPIED_KEY)||'[]');
+    for(var i=0;i<arr.length;i++) manualOccupied[arr[i]]=true;
+  }catch(e){}
 }
 
-function loadOccupied(){
-  supaFetch('GET','marcada_por?select=ubicacion')
-    .then(function(r){return r.json();})
-    .then(function(rows){
-      manualOccupied={};
-      for(var i=0;i<rows.length;i++) manualOccupied[rows[i].ubicacion]=true;
-      renderVacias();
-      renderStats();
-    })
-    .catch(function(e){console.warn('Supabase load error:',e);});
+function saveOccupied(){
+  try{localStorage.setItem(OCCUPIED_KEY,JSON.stringify(Object.keys(manualOccupied)));}catch(e){}
 }
 
 function markOccupied(u){
-  supaFetch('POST','marcada_por',{ubicacion:u, marcada_por:'Operario'})
-    .then(function(r){
-      if(r.ok||r.status===201||r.status===204){
-        manualOccupied[u]=true;
-        renderVacias();
-        renderStats();
-        showToast(u+' marcada como ocupada');
-      } else {
-        r.text().then(function(t){showToast('Error '+r.status);console.error('Supabase error:',r.status,t);});
-      }
-    })
-    .catch(function(e){showToast('Error al guardar');console.error(e);});
+  manualOccupied[u]=true;
+  saveOccupied();
+  renderVacias();
+  renderStats();
+  showToast(u+' marcada como ocupada');
 }
 
 function unmarkOccupied(u){
-  supaFetch('DELETE','marcada_por?ubicacion=eq.'+encodeURIComponent(u))
-    .then(function(){
-      delete manualOccupied[u];
-      renderVacias();
-      renderStats();
-      showToast(u+' devuelta a vacias');
-    })
-    .catch(function(e){showToast('Error al desmarcar');console.error(e);});
+  delete manualOccupied[u];
+  saveOccupied();
+  renderVacias();
+  renderStats();
+  showToast(u+' devuelta a vacias');
 }
 
 function syncOccupiedWithCSV(){
-  // When CSV loads, remove marks for locations that are now occupied in CSV
   var vaciaSet={};
   for(var i=0;i<V.length;i++) vaciaSet[V[i][0]]=true;
-  var toDelete=[];
+  var changed=false;
   for(var u in manualOccupied){
-    if(!vaciaSet[u]) toDelete.push(u);
+    if(!vaciaSet[u]){delete manualOccupied[u];changed=true;}
   }
-  for(var i=0;i<toDelete.length;i++){
-    supaFetch('DELETE','marcada_por?ubicacion=eq.'+encodeURIComponent(toDelete[i]));
-    delete manualOccupied[toDelete[i]];
-  }
+  if(changed) saveOccupied();
 }
 
-// Realtime subscription
-function subscribeRealtime(){
-  var es=new EventSource(SUPA_URL+'/realtime/v1/api/broadcast?apikey='+SUPA_KEY);
-  // Poll every 30s as lightweight realtime fallback
-  setInterval(function(){loadOccupied();}, 30000);
-}
+function subscribeRealtime(){}
 function showToast(msg){var t=document.getElementById('toast');t.textContent=msg;t.className='toast show';setTimeout(function(){t.className='toast';},2200);}
 function pad2(n){return n<10?'0'+n:String(n);}
 
@@ -269,7 +236,7 @@ function parseCSV(txt){
 
   // find column indexes by name
   function idx(name){for(var i=0;i<headers.length;i++)if(headers[i].trim()===name)return i;return -1;}
-  var iCod=idx('Codigo'), iDesc=idx('Descripcion'), iUbi=idx('UbicacionCorregida');
+  var iCod=idx('Codigo'), iDesc=idx('Descripcion'), iUbi=idx('UbicacionCodigo');
   var iRotM=idx('UDS_1Mes'), iRotT=idx('UDS_3Meses');
   var iVol=idx('Volumen'), iPeso=idx('Peso'), iEx=idx('Existencias'), iCat=idx('Catalogo');
 
