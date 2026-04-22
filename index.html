@@ -118,6 +118,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   <div class="frow" id="sFil"></div>
   <p class="sec-lbl" id="sLbl" style="display:none">Ubicaciones sobrestock libres</p>
   <div id="lS"><div class="loading"><div class="loading-spin"></div><div class="loading-txt">Cargando...</div></div></div>
+  <div id="secSobOcc" style="display:none">
+    <p class="sec-lbl" style="margin-top:8px;color:#27ae60">Marcadas como ocupadas</p>
+    <div id="lSobOcc"></div>
+  </div>
 </div>
 <div class="toast" id="toast"></div>
 <div class="load-overlay" id="loadOverlay">
@@ -164,6 +168,8 @@ var D=[], V=[];
 var rotMode=0, vacPas=0, rotPas=0;
 var SMAP=["A01012", "A01013", "A01022", "A01023", "A01032", "A01033", "A01042", "A01043", "A01052", "A01053", "A01062", "A01063", "A01072", "A01073", "A01082", "A01083", "A01092", "A01093", "A01102", "A01103", "A01112", "A01113", "A01122", "A01123", "A01132", "A01133", "A01142", "A01143", "A01152", "A01153", "A01162", "A01163", "A01172", "A01173", "A01182", "A01183", "A01192", "A01193", "A01202", "A01203", "A01212", "A01213", "A01222", "A01223", "A01232", "A01233", "A01242", "A01243", "A01252", "A01253", "A01262", "A01263", "A01272", "A01273", "A01282", "A01283", "A01292", "A01293", "A01302", "A01303", "A01312", "A01313", "A01322", "A01323", "A01332", "A01333", "A01342", "A01343", "A01352", "A01353", "A02012", "A02013", "A02022", "A02023", "A02032", "A02033", "A02042", "A02043", "A02052", "A02053", "A02062", "A02063", "A02072", "A02073", "A02082", "A02083", "A02092", "A02093", "A02102", "A02103", "A02112", "A02113", "A02122", "A02123", "A02132", "A02133", "A02142", "A02143", "A02152", "A02153", "A02162", "A02163", "A02172", "A02173", "A02182", "A02183", "A02192", "A02193", "A02202", "A02203", "A02212", "A02213", "A02222", "A02223", "A02232", "A02233", "A02242", "A02243", "A02252", "A02253", "A02262", "A02263", "A02272", "A02273", "A02282", "A02283", "A02292", "A02293", "A02302", "A02303", "A02312", "A02313", "A02322", "A02323", "A02332", "A02333", "A03012", "A03013", "A03022", "A03023", "A03032", "A03033", "A03042", "A03043", "A03052", "A03053", "A03062", "A03063", "A03072", "A03073", "A03082", "A03083", "A03092", "A03093", "A03102", "A03103", "A03112", "A03113", "A03122", "A03123", "A03132", "A03133", "A03142", "A03143", "A03152", "A03153", "A03162", "A03163", "A03172", "A03173", "A03182", "A03183", "A03192", "A03193", "A03202", "A03203", "A03212", "A03213", "A03222", "A03223", "A03232", "A03233", "A03242", "A03243", "A03252", "A03253", "A03262", "A03263", "A03272", "A03273", "A03282", "A03283", "A03292", "A03293", "A03302", "A03303", "A03312", "A03313", "A03322", "A03323", "A03332", "A03333", "A04012", "A04013", "A04022", "A04023", "A04032", "A04033", "A04042", "A04043", "A04052", "A04053", "A04062", "A04063", "A04072", "A04073", "A04082", "A04083", "A04092", "A04093", "A04102", "A04103", "A04112", "A04113", "A04122", "A04123", "A04132", "A04133", "A04142", "A04143", "A04152", "A04153", "A04162", "A04163", "A04172", "A04173", "A04182", "A04183", "A04192", "A04193", "A04202", "A04203", "A04212", "A04213", "A04222", "A04223", "A04232", "A04233", "A04242", "A04243", "A04252", "A04253", "A04262", "A04263", "A04272", "A04273", "A04282", "A04283", "A04292", "A04293", "A04302", "A04303", "A04312", "A04313", "A04322", "A04323", "A05012", "A05013", "A05022", "A05023", "A05032", "A05033", "A05042", "A05043", "A05052", "A05053", "A05062", "A05063", "A05072", "A05073", "A05082", "A05083", "A05092", "A05093", "A05102", "A05103", "A05112", "A05113", "A05122", "A05123", "A05132", "A05133", "A05142", "A05143", "A05152", "A05153", "A05162", "A05163", "A05172", "A05173", "A05182", "A05183", "A05192", "A05193", "A05202", "A05212", "A05222", "A05232", "A05242", "A05252", "A05262", "A05272", "A05282", "A05292", "A05302", "A05312", "A05322", "A06012", "A06022", "A06032", "A06042", "A06052", "A06062", "A06072", "A06082", "A06092", "A06102", "A06112", "A06122", "A06132", "A06142", "A06152", "A06162", "A06172", "A06182", "A06192", "A06202", "A06212", "A06222", "A06232", "A06242", "A06252", "A06262", "A06272", "A06282", "A06292", "A06302", "A06312", "A06322", "A06332", "A06342", "A06352", "A06362", "A06372", "A07012", "A07022", "A07032", "A07042", "A07052", "A07062", "A07072", "A07082", "A07092", "A07102", "A07112", "A07122", "A07132", "A07142", "A07152", "A07162", "A07172", "A07182", "A07192", "A07202", "A07212", "A07222", "A07232", "A07242", "A07252", "A07262", "A07272", "A07282", "A07292", "A07302", "A07312", "A07322", "A07332", "A07342", "A07352", "A07362", "A07372", "A08012", "A08022", "A08032", "A08042", "A08052", "A08062", "A08072", "A08082", "A08092", "A08102", "A08112", "A08122", "A08132", "A08142", "A08152", "A08162", "A08172", "A08182", "A08192", "A08202", "A08212", "A08222", "A08232", "A08242", "A08252", "A08262", "A08272", "A08282", "A08292", "A08302", "A08312", "A08322", "A08332", "A08342", "A08352", "A08362", "A09012", "A09022", "A09032", "A09042", "A09052", "A09062", "A09072", "A09082", "A09092", "A09102", "A09112", "A09122", "A09132", "A09142", "A09152", "A09162", "A09172", "A09182", "A09192", "A09202", "A09212", "A09222", "A09232", "A09242", "A09252", "A09262", "A09272", "A09282", "A09292", "A09302", "A09312", "A09322", "A09332", "A09342", "A09352", "A09362", "A10012", "A10022", "A10032", "A10042", "A10052", "A10062", "A10072", "A10082", "A10092", "A10102", "A10112", "A10122", "A10132", "A10142", "A10152", "A10162", "A10172", "A10182", "A10192", "A10202", "A10212", "A10222", "A10232", "A10242", "A10252", "A10262", "A10272", "A10282", "A11012", "A11022", "A11032", "A11042", "A11052", "A11062", "A11072", "A11082", "A11092", "A11102", "A11112", "A11122", "A11132", "A11142", "A11152", "A11162", "A11172", "A11182", "A11192", "A11202", "A11212", "A11222", "A11232", "A11242", "A11252", "A11262", "A11272", "A11282", "A12012", "A12022", "A12032", "A12042", "A12052", "A12062", "A12072", "A12082", "A12092", "A12102", "A12112", "A12122", "A12132", "A12142", "A12152", "A12162", "A12172", "A12182", "A12192", "A12202", "A12212", "A12222", "A12232", "A12242", "A12252", "A12262", "A12272", "A12282", "A12292", "A12302", "A12312", "A12322", "A12332", "A12342", "A12352", "A13012", "A13022", "A13032", "A13042", "A13052", "A13062", "A13072", "A13082", "A13092", "A13102", "A13112", "A13122", "A13132", "A13142", "A13152", "A13162", "A13172", "A13182", "A13192", "A13202", "A13212", "A13222", "A13232", "A13242", "A13252", "A13262", "A13272", "A13282", "A13292", "A13302", "A13312", "A13322", "A13332", "A13342", "A13352", "A14012", "A14022", "A14032", "A14042", "A14052", "A14062", "A14072", "A14082", "A14092", "A14102", "A14112", "A14122", "A14132", "A14142", "A14152", "A14162", "A14172", "A14182", "A14192", "A14202", "A14212", "A14222", "A14232", "A14242", "A14252", "A14262", "A14272", "A14282", "A14292", "A14302", "A14312", "A14322", "A14332", "A14342", "A14352", "A15012", "A15022", "A15032", "A15042", "A15052", "A15062", "A15072", "A15082", "A15092", "A15102", "A15112", "A15122", "A15132", "A15142", "A15152", "A15162", "A15172", "A15182", "A15192", "A15202", "A15212", "A15222", "A15232", "A15242", "A15252", "A15262", "A15272", "A15282", "A15292", "A15302", "A15312", "A15322", "A15332", "A15342", "A15352", "A16012", "A16022", "A16032", "A16042", "A16052", "A16062", "A16072", "A16082", "A16092", "A16102", "A16112", "A16122", "A16132", "A16142", "A16152", "A16162", "A16172", "A16182", "A16192", "A16202", "A16212", "A16222", "A16232", "A16242", "A16252", "A16262", "A16272", "A16282", "A16292", "A16302", "A16312", "A16322", "A16332", "A16342", "A16352", "A16362"];
 var OCCUPIED_KEY='almacenA_occ_v1';
+var SOB_OCCUPIED_KEY='almacenA_sob_v1';
+var manualSobOccupied={};
 var manualOccupied={};
 
 function loadOccupied(){
@@ -191,6 +197,25 @@ function unmarkOccupied(u){
   renderVacias();
   renderStats();
   showToast(u+' devuelta a vacias');
+}
+
+function loadSobOccupied(){
+  try{var a=JSON.parse(localStorage.getItem(SOB_OCCUPIED_KEY)||'[]');for(var i=0;i<a.length;i++)manualSobOccupied[a[i]]=true;}catch(e){}
+}
+function saveSobOccupied(){
+  try{localStorage.setItem(SOB_OCCUPIED_KEY,JSON.stringify(Object.keys(manualSobOccupied)));}catch(e){}
+}
+function markSobOccupied(u){
+  manualSobOccupied[u]=true;
+  saveSobOccupied();
+  renderSobrestock();
+  showToast(u+' marcada como ocupada');
+}
+function unmarkSobOccupied(u){
+  delete manualSobOccupied[u];
+  saveSobOccupied();
+  renderSobrestock();
+  showToast(u+' devuelta a libres');
 }
 
 function syncOccupiedWithCSV(){
@@ -577,7 +602,8 @@ var occupiedSobrestock=new Set();
 function renderSobrestockFilter(){
   var ps=[0];
   var pickingUbis=window._pickingUbis||new Set();
-  var free=SMAP.filter(function(u){return !occupiedSobrestock.has(u)&&!pickingUbis.has(u);});
+  var free=SMAP.filter(function(u){return !occupiedSobrestock.has(u)&&!pickingUbis.has(u)&&!manualSobOccupied[u];});
+  var manualMarked=SMAP.filter(function(u){return manualSobOccupied[u];});
   for(var i=0;i<free.length;i++){
     var p=parseInt(free[i].substring(1,3));
     if(ps.indexOf(p)<0) ps.push(p);
@@ -595,7 +621,8 @@ function setSP(p){sobPasFilter=p;renderSobrestockFilter();renderSobrestock();}
 function renderSobrestock(){
   if(!D.length){document.getElementById('lS').innerHTML='<div class="empty">Carga el CSV primero</div>';return;}
   var pickingUbis=window._pickingUbis||new Set();
-  var free=SMAP.filter(function(u){return !occupiedSobrestock.has(u)&&!pickingUbis.has(u);});
+  var free=SMAP.filter(function(u){return !occupiedSobrestock.has(u)&&!pickingUbis.has(u)&&!manualSobOccupied[u];});
+  var manualMarked=SMAP.filter(function(u){return manualSobOccupied[u];});
   var total=SMAP.length;
   var occ=total-free.length;
   var pct=total?Math.round(occ/total*1000)/10:0;
@@ -610,26 +637,51 @@ function renderSobrestock(){
 
   var filtered=sobPasFilter?free.filter(function(u){return parseInt(u.substring(1,3))===sobPasFilter;}):free;
   var el=document.getElementById('lS');
+
   if(!filtered.length){
     el.innerHTML='<div class="empty">No hay ubicaciones libres'+(sobPasFilter?' en P'+pad2(sobPasFilter):'')+' &#127881;</div>';
-    return;
+  } else {
+    var rows='';
+    for(var i=0;i<filtered.length;i++){
+      var u=filtered[i];
+      var p=parseInt(u.substring(1,3));
+      var n=parseInt(u[5]);
+      rows+='<div class="row"><div style="flex:1"><div class="ubi-big">'+u+'</div>'+
+            '<div class="rmeta">P'+pad2(p)+' &middot; Nivel '+n+'</div></div>'+
+            '<button class="btn-occ" id="sob_'+u+'">&#10003; Ocupar</button></div>';
+    }
+    el.innerHTML='<div class="card">'+rows+'</div>';
+    for(var i=0;i<filtered.length;i++){
+      (function(ubi){
+        var btn=document.getElementById('sob_'+ubi);
+        if(btn) btn.onclick=function(){markSobOccupied(ubi);};
+      })(filtered[i]);
+    }
   }
-  var h='<div class="card">';
-  for(var i=0;i<filtered.length;i++){
-    var u=filtered[i];
+
+  var secEl=document.getElementById('secSobOcc');
+  var filteredMarked=sobPasFilter?manualMarked.filter(function(u){return parseInt(u.substring(1,3))===sobPasFilter;}):manualMarked;
+  if(!filteredMarked.length){secEl.style.display='none';return;}
+  secEl.style.display='block';
+  var rows2='';
+  for(var i=0;i<filteredMarked.length;i++){
+    var u=filteredMarked[i];
     var p=parseInt(u.substring(1,3));
     var n=parseInt(u[5]);
-    h+='<div class="row">'+
-       '<div style="flex:1">'+
-         '<div class="ubi-big">'+u+'</div>'+
-         '<div class="rmeta">P'+pad2(p)+' &middot; Nivel '+n+'</div>'+
-       '</div>'+
-       '<span class="badge bg">Libre</span>'+
-    '</div>';
+    rows2+='<div class="row row-occ"><div style="flex:1"><div class="ubi-big" style="color:#27ae60;font-size:16px">'+u+'</div>'+
+           '<div class="rmeta">P'+pad2(p)+' &middot; Nivel '+n+'</div></div>'+
+           '<span class="badge bg" style="margin-right:6px">Ocupada</span>'+
+           '<button class="btn-undo" id="unsob_'+u+'">Deshacer</button></div>';
   }
-  h+='</div>';
-  el.innerHTML=h;
+  document.getElementById('lSobOcc').innerHTML='<div class="card">'+rows2+'</div>';
+  for(var i=0;i<filteredMarked.length;i++){
+    (function(ubi){
+      var btn=document.getElementById('unsob_'+ubi);
+      if(btn) btn.onclick=function(){unmarkSobOccupied(ubi);};
+    })(filteredMarked[i]);
+  }
 }
+
 
 // ---- LOADING ----
 function showLoading(msg, sub){
@@ -644,6 +696,7 @@ function hideLoading(){
 // ---- INIT ----
 fetchCSV();
 loadOccupied();
+loadSobOccupied();
 subscribeRealtime();
 </script>
 <script>
