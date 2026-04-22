@@ -514,43 +514,57 @@ var sobPasFilter=0;
 
 function parseSobrestockFromCSV(txt){
   var occupied=new Set();
+  var usedAsPicking=new Set();
   var lines=txt.split('\n');
   var headers=parseCSVLine(lines[0],';');
   var iAlt1=headers.indexOf('UbicacionCodigoAlt1');
   var iAlt2=headers.indexOf('UbicacionCodigoAlt2');
-  if(iAlt1<0||iAlt2<0) return occupied;
+  var iUbi=headers.indexOf('UbicacionCodigo');
+
   for(var i=1;i<lines.length;i++){
     var line=lines[i];
     if(!line) continue;
-    // Fast extraction: look for 'A' followed by digits pattern without regex
-    var alts=[];
     var f=line.split(';');
-    if(iAlt1<f.length) alts.push(f[iAlt1]);
-    if(iAlt2<f.length) alts.push(f[iAlt2]);
+
+    // Collect all UbicacionCodigo as picking (excludes from sobrestock)
+    if(iUbi>=0&&iUbi<f.length){
+      var u=f[iUbi].trim();
+      if(u) usedAsPicking.add(u);
+    }
+
+    // Collect occupied sobrestock from Alt1/Alt2
+    var alts=[];
+    if(iAlt1>=0&&iAlt1<f.length) alts.push(f[iAlt1]);
+    if(iAlt2>=0&&iAlt2<f.length) alts.push(f[iAlt2]);
     for(var j=0;j<alts.length;j++){
       var s=alts[j];
       for(var k=0;k<s.length-5;k++){
         if(s[k]==='A'){
-          // try to extract A + 2 digits + optional space + 2 digits + optional space + 1 digit
-          var u=s.substring(k,k+9).replace(/ /g,'');
-          if(u.length>=6&&u[0]==='A'&&
-             u[1]>='0'&&u[1]<='9'&&u[2]>='0'&&u[2]<='9'&&
-             u[3]>='0'&&u[3]<='9'&&u[4]>='0'&&u[4]<='9'&&
-             u[5]>='0'&&u[5]<='9'){
-            occupied.add(u.substring(0,6));
+          var raw=s.substring(k,k+9).replace(/ /g,'');
+          if(raw.length>=6&&raw[0]==='A'&&
+             raw[1]>='0'&&raw[1]<='9'&&raw[2]>='0'&&raw[2]<='9'&&
+             raw[3]>='0'&&raw[3]<='9'&&raw[4]>='0'&&raw[4]<='9'&&
+             raw[5]>='0'&&raw[5]<='9'){
+            occupied.add(raw.substring(0,6));
           }
         }
       }
     }
   }
+
+  // Remove from SMAP any location used as picking
+  // Store usedAsPicking globally so renderSobrestock can filter
+  window._pickingUbis=usedAsPicking;
   return occupied;
 }
+
 
 var occupiedSobrestock=new Set();
 
 function renderSobrestockFilter(){
   var ps=[0];
-  var free=SMAP.filter(function(u){return !occupiedSobrestock.has(u);});
+  var pickingUbis=window._pickingUbis||new Set();
+  var free=SMAP.filter(function(u){return !occupiedSobrestock.has(u)&&!pickingUbis.has(u);});
   for(var i=0;i<free.length;i++){
     var p=parseInt(free[i].substring(1,3));
     if(ps.indexOf(p)<0) ps.push(p);
@@ -567,7 +581,8 @@ function setSP(p){sobPasFilter=p;renderSobrestockFilter();renderSobrestock();}
 
 function renderSobrestock(){
   if(!D.length){document.getElementById('lS').innerHTML='<div class="empty">Carga el CSV primero</div>';return;}
-  var free=SMAP.filter(function(u){return !occupiedSobrestock.has(u);});
+  var pickingUbis=window._pickingUbis||new Set();
+  var free=SMAP.filter(function(u){return !occupiedSobrestock.has(u)&&!pickingUbis.has(u);});
   var total=SMAP.length;
   var occ=total-free.length;
   var pct=total?Math.round(occ/total*1000)/10:0;
