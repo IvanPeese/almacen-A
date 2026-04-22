@@ -495,7 +495,7 @@ var sobPasFilter=0;
 
 function buildSobrestock(){
   // Extract occupied sobrestock from CSV Alt1/Alt2 fields
-  var pattern=/A(\d{2})\s*(\d{2})\s*(\d)/g;
+  var pattern=/A([0-9]{2})\s*([0-9]{2})\s*([0-9])/g;
   var occupied=new Set();
   for(var i=0;i<D.length;i++){
     // We don't have Alt fields in our parsed data
@@ -506,11 +506,12 @@ function buildSobrestock(){
 
 function parseSobrestockFromCSV(txt){
   // Called after CSV is parsed - extract alt locations
-  var pattern=/A\d{2}\s*\d{2}\s*\d/g;
+  var pattern=/A[0-9]{2}\s*[0-9]{2}\s*[0-9]/g;
   var occupied=new Set();
   var lines=txt.replace(/
 /g,'
-').replace(//g,'
+').replace(/
+/g,'
 ').split('
 ');
   var headers=parseCSVLine(lines[0],';');
@@ -523,7 +524,7 @@ function parseSobrestockFromCSV(txt){
     var f=parseCSVLine(line,';');
     var combined=((f[iAlt1]||'')+' '+(f[iAlt2]||'')).replace(/"/g,'');
     var m;
-    var re2=/A(\d{2})\s*(\d{2})\s*(\d)/g;
+    var re2=/A([0-9]{2})\s*([0-9]{2})\s*([0-9])/g;
     while((m=re2.exec(combined))!==null){
       occupied.add('A'+m[1]+m[2]+m[3]);
     }
@@ -618,7 +619,7 @@ subscribeRealtime();
   document.addEventListener('touchend',function(e){
     var meta=document.querySelector('meta[name=viewport]');
     var content=meta.getAttribute('content');
-    var match=content.match(/initial-scale=([\d.]+)/);
+    var match=content.match(/initial-scale=([0-9.]+)/);
     if(match) lastScale=parseFloat(match[1]);
   },{passive:true});
 })();
