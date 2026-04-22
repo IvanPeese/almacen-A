@@ -447,6 +447,7 @@ function doSearch(q){
   var ql=q.toLowerCase(), res=[];
   for(var i=0;i<D.length&&res.length<25;i++){
     var r=D[i];
+    if(r[6]!==1) continue;
     if(r[0].toLowerCase().indexOf(ql)>=0||r[1].toLowerCase().indexOf(ql)>=0||r[2].toLowerCase().indexOf(ql)>=0) res.push(r);
   }
   if(!res.length){el.innerHTML='<div class="empty">Sin resultados para "'+q+'"</div>';return;}
