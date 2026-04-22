@@ -246,6 +246,7 @@ function parseCSV(txt){
     if(!line) continue;
     var f=parseCSVLine(line,';');
     var ubi=f[iUbi]||'';
+    if(!ubi.trim()) continue;
     var parsed=parseUbi(ubi);
     var isPicking=0, zona=null;
     if(parsed){
