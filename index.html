@@ -146,17 +146,23 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 var D=[], V=[];
 var rotMode=0, vacPas=0, rotPas=0;
 var SUPA_URL='https://chvfagljjkpvmdajnjvx.supabase.co';
-var SUPA_KEY='sb_publishable_tl-zl-7THPOwQZGQ46qlJg_QB5jeFMd';
+var SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNodmZhZ2xqamtwdm1kYWpuanZ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY2Nzc0MDEsImV4cCI6MjA5MjI1MzQwMX0.Hts6bUJz9yEd70RnPrBfLfuVyt_rFw_r1Xh3E59hg-Q';
 var manualOccupied={};
 
 function supaFetch(method, path, body){
-  var opts={method:method, headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/json','Prefer':'return=minimal'}};
+  var headers={
+    'apikey':SUPA_KEY,
+    'Authorization':'Bearer '+SUPA_KEY,
+    'Content-Type':'application/json'
+  };
+  if(method==='POST') headers['Prefer']='return=representation';
+  var opts={method:method, headers:headers};
   if(body) opts.body=JSON.stringify(body);
   return fetch(SUPA_URL+'/rest/v1/'+path, opts);
 }
 
 function loadOccupied(){
-  supaFetch('GET','ocupadas?select=ubicacion')
+  supaFetch('GET','marcada_por?select=ubicacion')
     .then(function(r){return r.json();})
     .then(function(rows){
       manualOccupied={};
@@ -168,18 +174,22 @@ function loadOccupied(){
 }
 
 function markOccupied(u){
-  supaFetch('POST','ocupadas',{ubicacion:u, marcada_por:'Operario'})
-    .then(function(){
-      manualOccupied[u]=true;
-      renderVacias();
-      renderStats();
-      showToast(u+' marcada como ocupada');
+  supaFetch('POST','marcada_por',{ubicacion:u, marcada_por:'Operario'})
+    .then(function(r){
+      if(r.ok||r.status===201||r.status===204){
+        manualOccupied[u]=true;
+        renderVacias();
+        renderStats();
+        showToast(u+' marcada como ocupada');
+      } else {
+        r.text().then(function(t){showToast('Error '+r.status);console.error('Supabase error:',r.status,t);});
+      }
     })
     .catch(function(e){showToast('Error al guardar');console.error(e);});
 }
 
 function unmarkOccupied(u){
-  supaFetch('DELETE','ocupadas?ubicacion=eq.'+encodeURIComponent(u))
+  supaFetch('DELETE','marcada_por?ubicacion=eq.'+encodeURIComponent(u))
     .then(function(){
       delete manualOccupied[u];
       renderVacias();
@@ -198,7 +208,7 @@ function syncOccupiedWithCSV(){
     if(!vaciaSet[u]) toDelete.push(u);
   }
   for(var i=0;i<toDelete.length;i++){
-    supaFetch('DELETE','ocupadas?ubicacion=eq.'+encodeURIComponent(toDelete[i]));
+    supaFetch('DELETE','marcada_por?ubicacion=eq.'+encodeURIComponent(toDelete[i]));
     delete manualOccupied[toDelete[i]];
   }
 }
