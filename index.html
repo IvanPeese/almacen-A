@@ -585,7 +585,7 @@ function parseSobrestockFromCSV(txt){
       var s=alts[j];
       for(var k=0;k<s.length-5;k++){
         if(s[k]==='A'){
-          var raw=s.substring(k,k+9).replace(/ /g,'').replace(/\n/g,'').replace(/\r/g,'');
+          var raw=s.substring(k,k+9).split(' ').join('').split('\n').join('').split('\r').join('');
           if(raw.length>=6&&raw[0]==='A'&&
              raw[1]>='0'&&raw[1]<='9'&&raw[2]>='0'&&raw[2]<='9'&&
              raw[3]>='0'&&raw[3]<='9'&&raw[4]>='0'&&raw[4]<='9'&&
@@ -716,7 +716,8 @@ function buildSobIndex(txt){
       while(k<s.length-5){
         if(s[k]==='A'){
           var raw=s.substring(k,k+9).replace(/ /g,'').replace(/
-/g,'').replace(//g,'');
+/g,'').replace(/
+/g,'');
           if(raw.length>=6&&raw[0]==='A'&&
              raw[1]>='0'&&raw[1]<='9'&&raw[2]>='0'&&raw[2]<='9'&&
              raw[3]>='0'&&raw[3]<='9'&&raw[4]>='0'&&raw[4]<='9'&&
