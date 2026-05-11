@@ -86,6 +86,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   <div class="tab" onclick="sw(1)">Rotacion</div>
   <div class="tab" onclick="sw(2)">Buscar</div>
   <div class="tab" onclick="sw(3)">Sobrestock</div>
+  <div class="tab" onclick="sw(4)">Consultar</div>
 </div>
 <div class="body">
   <div id="pv" class="panel on">
@@ -122,6 +123,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <p class="sec-lbl" style="margin-top:8px;color:#27ae60">Marcadas como ocupadas</p>
     <div id="lSobOcc"></div>
   </div>
+</div>
+<div id="pc" class="panel">
+  <input class="srch" id="siSob" type="search" placeholder="Ubicacion de sobrestock, ej: A01052..." oninput="doSearchSob(this.value)" autocomplete="off" autocorrect="off" spellcheck="false">
+  <p class="sec-lbl" id="sobConsultaLbl" style="display:none">Articulo en esa ubicacion</p>
+  <div id="lC"><div class="empty">Escribe una ubicacion para consultar</div></div>
 </div>
 <div class="toast" id="toast"></div>
 <div class="load-overlay" id="loadOverlay">
@@ -251,6 +257,7 @@ function fetchCSV(){
         // Parse sobrestock in background after UI is ready
         setTimeout(function(){
           occupiedSobrestock=parseSobrestockFromCSV(txt);
+        buildSobIndex(txt);
         }, 100);
       }, 50);
     })
@@ -390,8 +397,8 @@ function buildVacias(occupied){
 
 // ---- UI ----
 function sw(t){
-  var ids=['pv','pr','pb','ps'];
-  for(var i=0;i<4;i++){
+  var ids=['pv','pr','pb','ps','pc'];
+  for(var i=0;i<5;i++){
     document.getElementById(ids[i]).className='panel'+(i===t?' on':'');
     document.querySelectorAll('.tab')[i].className='tab'+(i===t?' on':'');
   }
@@ -682,6 +689,99 @@ function renderSobrestock(){
   }
 }
 
+
+// ---- CONSULTA SOBRESTOCK ----
+var sobIndex={};
+
+function buildSobIndex(txt){
+  sobIndex={};
+  var lines=splitCSVRows(txt);
+  var headers=parseCSVLine(lines[0],';');
+  var iCod=headers.indexOf('Codigo');
+  var iDesc=headers.indexOf('Descripcion');
+  var iAlt1=headers.indexOf('UbicacionCodigoAlt1');
+  var iAlt2=headers.indexOf('UbicacionCodigoAlt2');
+  if(iAlt1<0||iAlt2<0) return;
+  for(var i=1;i<lines.length;i++){
+    var line=lines[i];
+    if(!line) continue;
+    var f=line.split(';');
+    if(f.length<=Math.max(iAlt1,iAlt2)) continue;
+    var cod=f[iCod]||'';
+    var desc=(f[iDesc]||'').substring(0,55);
+    var alts=[f[iAlt1]||'',f[iAlt2]||''];
+    for(var j=0;j<alts.length;j++){
+      var s=alts[j].replace(/"/g,'');
+      var k=0;
+      while(k<s.length-5){
+        if(s[k]==='A'){
+          var raw=s.substring(k,k+9).replace(/ /g,'').replace(/
+/g,'').replace(//g,'');
+          if(raw.length>=6&&raw[0]==='A'&&
+             raw[1]>='0'&&raw[1]<='9'&&raw[2]>='0'&&raw[2]<='9'&&
+             raw[3]>='0'&&raw[3]<='9'&&raw[4]>='0'&&raw[4]<='9'&&
+             raw[5]>='0'&&raw[5]<='9'){
+            var ubi=raw.substring(0,6);
+            // Extract units from (NNN) after location
+            var after=s.substring(k+7);
+            var uds=0;
+            var pm=after.indexOf('(');
+            if(pm>=0&&pm<4){
+              var pe=after.indexOf(')',pm);
+              if(pe>pm) uds=parseInt(after.substring(pm+1,pe))||0;
+            }
+            if(!sobIndex[ubi]) sobIndex[ubi]=[];
+            // Avoid duplicates
+            var found=false;
+            for(var x=0;x<sobIndex[ubi].length;x++){if(sobIndex[ubi][x].c===cod){found=true;break;}}
+            if(!found) sobIndex[ubi].push({c:cod,d:desc,u:uds});
+          }
+        }
+        k++;
+      }
+    }
+  }
+}
+
+function doSearchSob(q){
+  var el=document.getElementById('lC');
+  var lbl=document.getElementById('sobConsultaLbl');
+  if(!q||q.length<4){
+    el.innerHTML='<div class="empty">Escribe una ubicacion para consultar</div>';
+    lbl.style.display='none';
+    return;
+  }
+  var ql=q.toUpperCase().replace(/ /g,'');
+  var matches=[];
+  for(var u in sobIndex){if(u.toUpperCase().indexOf(ql)>=0) matches.push(u);}
+  if(!matches.length){
+    el.innerHTML='<div class="empty">No hay articulos registrados en esa ubicacion</div>';
+    lbl.style.display='none';
+    return;
+  }
+  lbl.style.display='block';
+  var h='<div class="card">';
+  for(var i=0;i<matches.length;i++){
+    var ubi=matches[i];
+    var items=sobIndex[ubi];
+    var p=parseInt(ubi.substring(1,3));
+    var n=parseInt(ubi[5]);
+    h+='<div class="row" style="flex-direction:column;align-items:flex-start;gap:4px">'+
+       '<div style="display:flex;align-items:center;gap:8px">'+
+         '<div class="ubi-big">'+ubi+'</div>'+
+         '<div class="rmeta">P'+pad2(p)+' &middot; Nivel '+n+'</div>'+
+       '</div>';
+    for(var j=0;j<items.length;j++){
+      var it=items[j];
+      h+='<div style="width:100%;padding:5px 0;border-top:.5px solid #f0f0f0;display:flex;justify-content:space-between;align-items:center">'+
+         '<div><div class="rref">'+it.c+'</div><div class="rdesc">'+it.d+'</div></div>'+
+         (it.u?'<span class="badge bp">'+it.u+' uds</span>':'<span class="badge bw">uds N/D</span>')+
+       '</div>';
+    }
+    h+='</div>';
+  }
+  el.innerHTML=h+'</div>';
+}
 
 // ---- LOADING ----
 function showLoading(msg, sub){
