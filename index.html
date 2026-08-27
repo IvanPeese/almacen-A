@@ -29,6 +29,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .bv{background:#fff0f0;color:#c0392b}
 .bg{background:#f0fff4;color:#27ae60}
 .bp{background:#f0f4ff;color:#0f3460}
+.bw{background:#fff8ec;color:#b8860b}
+.bs{background:#ecebff;color:#5b3ee8;margin-right:6px}
+.srch.scan-hit{border-color:#27ae60;background:#f6fffa}
 .panel{display:none}
 .panel.on{display:block}
 .srch{width:100%;padding:11px 14px;font-size:15px;border:1.5px solid #ddd;border-radius:8px;background:#fff;color:#1a1a2e;margin-bottom:10px;outline:none}
@@ -86,7 +89,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   <div class="tab" onclick="sw(1)">Rotacion</div>
   <div class="tab" onclick="sw(2)">Buscar</div>
   <div class="tab" onclick="sw(3)">Sobrestock</div>
-  <div class="tab" onclick="sw(4)">Consultar</div>
+  <div class="tab" onclick="sw(4)">Consultar (PDA)</div>
 </div>
 <div class="body">
   <div id="pv" class="panel on">
@@ -125,9 +128,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   </div>
 </div>
 <div id="pc" class="panel">
-  <input class="srch" id="siSob" type="search" placeholder="Ubicacion de sobrestock, ej: A01052..." oninput="doSearchSob(this.value)" autocomplete="off" autocorrect="off" spellcheck="false">
-  <p class="sec-lbl" id="sobConsultaLbl" style="display:none">Articulo en esa ubicacion</p>
-  <div id="lC"><div class="empty">Escribe una ubicacion para consultar</div></div>
+  <input class="srch" id="siSob" type="search" inputmode="text" placeholder="Escanea o escribe una ubicacion (A o B), ej: A01052, B07061..." oninput="doSearchSob(this.value)" autocomplete="off" autocorrect="off" spellcheck="false">
+  <p class="sec-lbl" id="sobConsultaLbl" style="display:none">Mercancia en esa ubicacion</p>
+  <div id="lC"><div class="empty">Escanea o escribe una ubicacion para consultar (Sector A o B)</div></div>
 </div>
 <div class="toast" id="toast"></div>
 <div class="load-overlay" id="loadOverlay">
@@ -257,7 +260,7 @@ function fetchCSV(){
         // Parse sobrestock in background after UI is ready
         setTimeout(function(){
           occupiedSobrestock=parseSobrestockFromCSV(txt);
-        buildSobIndex(txt);
+        buildLocationIndex(txt);
         }, 100);
       }, 50);
     })
@@ -403,6 +406,7 @@ function sw(t){
     document.querySelectorAll('.tab')[i].className='tab'+(i===t?' on':'');
   }
   if(t===3) renderSobrestock();
+  if(t===4){var si=document.getElementById('siSob');if(si)setTimeout(function(){si.focus();},50);}
 }
 function updateHeader(n){
   var now=new Date().toLocaleString('es-ES',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
@@ -690,38 +694,74 @@ function renderSobrestock(){
 }
 
 
-// ---- CONSULTA SOBRESTOCK ----
-var sobIndex={};
+// ---- CONSULTA POR UBICACION (PDA) - Sector A y Sector B ----
+// locIndex[UBICACION] = { picking:[{c,d,ex,rm,rt}], sobrestock:[{c,d,u}] }
+var locIndex={};
 
-function buildSobIndex(txt){
-  sobIndex={};
+function normUbi(s){return String(s||'').toUpperCase().replace(/[^A-Z0-9]/g,'');}
+
+function ubiSector(ubi){
+  var c=ubi.charAt(0);
+  return (c>='A'&&c<='Z')?c:'?';
+}
+
+function buildLocationIndex(txt){
+  locIndex={};
   var lines=splitCSVRows(txt);
   var headers=parseCSVLine(lines[0],';');
   var iCod=headers.indexOf('Codigo');
   var iDesc=headers.indexOf('Descripcion');
+  var iUbi=headers.indexOf('UbicacionCodigo');
+  var iEx=headers.indexOf('Existencias');
+  var iRotM=headers.indexOf('UDS_1Mes');
+  var iRotT=headers.indexOf('UDS_3Meses');
   var iAlt1=headers.indexOf('UbicacionCodigoAlt1');
   var iAlt2=headers.indexOf('UbicacionCodigoAlt2');
-  if(iAlt1<0||iAlt2<0) return;
+
+  function entry(ubi){
+    if(!locIndex[ubi]) locIndex[ubi]={picking:[],sobrestock:[]};
+    return locIndex[ubi];
+  }
+
   for(var i=1;i<lines.length;i++){
     var line=lines[i];
     if(!line) continue;
     var f=line.split(';');
-    if(f.length<=Math.max(iAlt1,iAlt2)) continue;
-    var cod=f[iCod]||'';
+    var cod=(f[iCod]||'').trim();
     var desc=(f[iDesc]||'').substring(0,55);
-    var alts=[f[iAlt1]||'',f[iAlt2]||''];
+
+    // --- Ubicacion principal de picking (cualquier sector: A, B, ...) ---
+    if(iUbi>=0&&iUbi<f.length){
+      var ubiRaw=(f[iUbi]||'').trim();
+      if(ubiRaw){
+        var ubi=normUbi(ubiRaw);
+        if(/^[A-Z][0-9]{4,}/.test(ubi)){
+          entry(ubi).picking.push({
+            c:cod, d:desc,
+            ex: iEx>=0?toInt(f[iEx]):0,
+            rm: iRotM>=0?toInt(f[iRotM]):0,
+            rt: iRotT>=0?toInt(f[iRotT]):0
+          });
+        }
+      }
+    }
+
+    // --- Sobrestock: ubicaciones alternativas dentro de Alt1/Alt2 (cualquier sector) ---
+    var alts=[];
+    if(iAlt1>=0&&iAlt1<f.length) alts.push(f[iAlt1]||'');
+    if(iAlt2>=0&&iAlt2<f.length) alts.push(f[iAlt2]||'');
     for(var j=0;j<alts.length;j++){
       var s=alts[j].replace(/"/g,'');
       var k=0;
       while(k<s.length-5){
-        if(s[k]==='A'){
+        var ch=s[k];
+        if(ch>='A'&&ch<='Z'){
           var raw=s.substring(k,k+9).split(' ').join('').split('\n').join('').split('\r').join('');
-          if(raw.length>=6&&raw[0]==='A'&&
+          if(raw.length>=6&&
              raw[1]>='0'&&raw[1]<='9'&&raw[2]>='0'&&raw[2]<='9'&&
              raw[3]>='0'&&raw[3]<='9'&&raw[4]>='0'&&raw[4]<='9'&&
              raw[5]>='0'&&raw[5]<='9'){
-            var ubi=raw.substring(0,6);
-            // Extract units from (NNN) after location
+            var ubi2=raw.substring(0,6);
             var after=s.substring(k+7);
             var uds=0;
             var pm=after.indexOf('(');
@@ -729,11 +769,10 @@ function buildSobIndex(txt){
               var pe=after.indexOf(')',pm);
               if(pe>pm) uds=parseInt(after.substring(pm+1,pe))||0;
             }
-            if(!sobIndex[ubi]) sobIndex[ubi]=[];
-            // Avoid duplicates
+            var sob=entry(ubi2).sobrestock;
             var found=false;
-            for(var x=0;x<sobIndex[ubi].length;x++){if(sobIndex[ubi][x].c===cod){found=true;break;}}
-            if(!found) sobIndex[ubi].push({c:cod,d:desc,u:uds});
+            for(var x=0;x<sob.length;x++){if(sob[x].c===cod){found=true;break;}}
+            if(!found) sob.push({c:cod,d:desc,u:uds});
           }
         }
         k++;
@@ -742,45 +781,101 @@ function buildSobIndex(txt){
   }
 }
 
+function sectorBadgeColor(sec){
+  return sec==='B'?'style="background:#fff4e8;color:#c07a00"':'';
+}
+
+function renderUbiRow(ubi){
+  var data=locIndex[ubi];
+  var p=parseInt(ubi.substring(1,3))||0;
+  var n=ubi.length>5?ubi[5]:'-';
+  var sec=ubiSector(ubi);
+  var h='<div class="row" style="flex-direction:column;align-items:flex-start;gap:4px">'+
+     '<div style="display:flex;align-items:center;gap:8px">'+
+       '<span class="badge bs" '+sectorBadgeColor(sec)+'>Sector '+sec+'</span>'+
+       '<div class="ubi-big">'+ubi+'</div>'+
+       '<div class="rmeta">Pasillo '+pad2(p)+' &middot; Nivel '+n+'</div>'+
+     '</div>';
+  if(!data||(!data.picking.length&&!data.sobrestock.length)){
+    h+='<div style="width:100%;padding:6px 0;color:#aaa;font-size:12px">Sin mercancia registrada en esta ubicacion</div></div>';
+    return h;
+  }
+  for(var i=0;i<data.picking.length;i++){
+    var it=data.picking[i];
+    h+='<div style="width:100%;padding:5px 0;border-top:.5px solid #f0f0f0;display:flex;justify-content:space-between;align-items:center;gap:8px">'+
+       '<div><div style="display:flex;align-items:center;gap:5px"><span class="rref">'+it.c+'</span>'+
+       '<span class="badge bg" style="font-size:9px">Picking</span></div>'+
+       '<div class="rdesc" style="max-width:220px">'+it.d+'</div>'+
+       '<div class="rmeta">Rot/mes: '+it.rm+' &middot; Rot/trim: '+it.rt+'</div></div>'+
+       '<span class="badge bp">'+it.ex+' uds</span>'+
+       '</div>';
+  }
+  for(var i=0;i<data.sobrestock.length;i++){
+    var it=data.sobrestock[i];
+    h+='<div style="width:100%;padding:5px 0;border-top:.5px solid #f0f0f0;display:flex;justify-content:space-between;align-items:center;gap:8px">'+
+       '<div><div style="display:flex;align-items:center;gap:5px"><span class="rref">'+it.c+'</span>'+
+       '<span class="badge bv" style="font-size:9px">Sobrestock</span></div>'+
+       '<div class="rdesc" style="max-width:220px">'+it.d+'</div></div>'+
+       (it.u?'<span class="badge bp">'+it.u+' uds</span>':'<span class="badge bw">uds N/D</span>')+
+       '</div>';
+  }
+  h+='</div>';
+  return h;
+}
+
 function doSearchSob(q){
   var el=document.getElementById('lC');
   var lbl=document.getElementById('sobConsultaLbl');
-  if(!q||q.length<4){
-    el.innerHTML='<div class="empty">Escribe una ubicacion para consultar</div>';
+  var inp=document.getElementById('siSob');
+  if(!q||q.length<3){
+    el.innerHTML='<div class="empty">Escanea o escribe una ubicacion para consultar (Sector A o B)</div>';
     lbl.style.display='none';
+    inp.className='srch';
     return;
   }
-  var ql=q.toUpperCase().replace(/ /g,'');
+  var ql=normUbi(q);
+
+  // Coincidencia exacta (caso tipico al escanear con PDA)
+  if(locIndex[ql]){
+    lbl.style.display='block';
+    lbl.textContent='Mercancia en '+ql;
+    el.innerHTML='<div class="card">'+renderUbiRow(ql)+'</div>';
+    inp.className='srch scan-hit';
+    return;
+  }
+  inp.className='srch';
+
+  // Coincidencia parcial (busqueda manual)
   var matches=[];
-  for(var u in sobIndex){if(u.toUpperCase().indexOf(ql)>=0) matches.push(u);}
+  for(var u in locIndex){if(u.indexOf(ql)>=0) matches.push(u);}
+  matches.sort();
+  if(matches.length>30) matches=matches.slice(0,30);
   if(!matches.length){
-    el.innerHTML='<div class="empty">No hay articulos registrados en esa ubicacion</div>';
+    el.innerHTML='<div class="empty">No hay mercancia registrada en esa ubicacion</div>';
     lbl.style.display='none';
     return;
   }
   lbl.style.display='block';
+  lbl.textContent=matches.length+' ubicacion(es) encontradas';
   var h='<div class="card">';
-  for(var i=0;i<matches.length;i++){
-    var ubi=matches[i];
-    var items=sobIndex[ubi];
-    var p=parseInt(ubi.substring(1,3));
-    var n=parseInt(ubi[5]);
-    h+='<div class="row" style="flex-direction:column;align-items:flex-start;gap:4px">'+
-       '<div style="display:flex;align-items:center;gap:8px">'+
-         '<div class="ubi-big">'+ubi+'</div>'+
-         '<div class="rmeta">P'+pad2(p)+' &middot; Nivel '+n+'</div>'+
-       '</div>';
-    for(var j=0;j<items.length;j++){
-      var it=items[j];
-      h+='<div style="width:100%;padding:5px 0;border-top:.5px solid #f0f0f0;display:flex;justify-content:space-between;align-items:center">'+
-         '<div><div class="rref">'+it.c+'</div><div class="rdesc">'+it.d+'</div></div>'+
-         (it.u?'<span class="badge bp">'+it.u+' uds</span>':'<span class="badge bw">uds N/D</span>')+
-       '</div>';
-    }
-    h+='</div>';
-  }
+  for(var i=0;i<matches.length;i++) h+=renderUbiRow(matches[i]);
   el.innerHTML=h+'</div>';
 }
+
+// Modo escaneo continuo: al pulsar Enter (los lectores PDA suelen emular Enter),
+// selecciona todo el texto para que el siguiente escaneo sobreescriba automaticamente
+// sin necesidad de borrar manualmente, y mantiene el foco listo para el proximo escaneo.
+(function(){
+  var inp=document.getElementById('siSob');
+  if(!inp) return;
+  inp.addEventListener('keydown',function(e){
+    if(e.key==='Enter'){
+      e.preventDefault();
+      doSearchSob(inp.value);
+      setTimeout(function(){inp.select();},0);
+    }
+  });
+})();
 
 // ---- LOADING ----
 function showLoading(msg, sub){
