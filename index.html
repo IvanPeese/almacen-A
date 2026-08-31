@@ -4,6 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=5.0, user-scalable=yes">
 <title>Almacen A + B</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1a1a2e">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Almacén A+B">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" href="icons/icon-192.png">
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f0f0f0;min-height:100vh;font-size:14px;touch-action:pan-x pan-y pinch-zoom}
@@ -77,13 +85,19 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .load-spinner{width:48px;height:48px;border:4px solid rgba(255,255,255,.2);border-top-color:#e94560;border-radius:50%;animation:spin .8s linear infinite}
 .load-msg{color:#fff;font-size:14px;font-weight:600;letter-spacing:.02em}
 .load-sub{color:#8888aa;font-size:11px;margin-top:-10px}
+.offline-banner{display:none;background:#fff4e8;color:#b8860b;font-size:11px;font-weight:700;text-align:center;padding:6px 10px}
+.offline-banner.on{display:block}
+.install-btn{display:none;border:none;background:#e94560;color:#fff;font-size:11px;font-weight:700;padding:6px 10px;border-radius:6px;cursor:pointer;white-space:nowrap}
+.install-btn.on{display:inline-block}
 </style>
 </head>
 <body>
 
 <div class="hdr">
   <div><div class="hdr-title">Almacen A + B</div><div class="hdr-sub" id="hsub">Cargando datos...</div></div>
+  <button class="install-btn" id="btnInstall" onclick="installApp()">+ Instalar app</button>
 </div>
+<div class="offline-banner" id="offlineBanner">Sin conexión — mostrando los últimos datos guardados en este dispositivo</div>
 <div class="tabs">
   <div class="tab on" onclick="sw(0)">Vacias</div>
   <div class="tab" onclick="sw(1)">Rotacion</div>
@@ -955,6 +969,48 @@ fetchCSV();
 loadOccupied();
 loadSobOccupied();
 subscribeRealtime();
+
+// ---- PWA: instalación en pantalla de inicio ----
+var deferredInstallPrompt = null;
+window.addEventListener('beforeinstallprompt', function (e) {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  var btn = document.getElementById('btnInstall');
+  if (btn) btn.className = 'install-btn on';
+});
+function installApp() {
+  if (!deferredInstallPrompt) return;
+  deferredInstallPrompt.prompt();
+  deferredInstallPrompt.userChoice.finally(function () {
+    deferredInstallPrompt = null;
+    var btn = document.getElementById('btnInstall');
+    if (btn) btn.className = 'install-btn';
+  });
+}
+window.addEventListener('appinstalled', function () {
+  var btn = document.getElementById('btnInstall');
+  if (btn) btn.className = 'install-btn';
+  showToast('App instalada. Ya tienes el icono en la pantalla de inicio.');
+});
+
+// ---- PWA: aviso de sin conexión ----
+function updateOfflineBanner() {
+  var banner = document.getElementById('offlineBanner');
+  if (!banner) return;
+  banner.className = navigator.onLine ? 'offline-banner' : 'offline-banner on';
+}
+window.addEventListener('online', updateOfflineBanner);
+window.addEventListener('offline', updateOfflineBanner);
+updateOfflineBanner();
+
+// ---- PWA: registro del service worker (caché offline del shell y del último CSV) ----
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function () {
+    navigator.serviceWorker.register('service-worker.js').catch(function (err) {
+      console.warn('No se pudo registrar el service worker:', err);
+    });
+  });
+}
 </script>
 <script>
 // Force pinch zoom on Edge Android
