@@ -409,6 +409,27 @@ var RESTRICTED={
   'A05311':1,'A05321':1
 };
 
+// Rango real de columnas por pasillo del Sector A, derivado de SMAP_A (mapa fisico
+// verdadero, usado tambien para el sobrestock). No se puede inferir el rango a partir
+// de las ubicaciones actualmente ocupadas: si una columna entera (p.ej. la ultima de un
+// pasillo) no tiene ahora mismo ningun articulo asignado, nunca aparece en los datos del
+// CSV y quedaria fuera del bucle, con lo que esas ubicaciones vacias de verdad nunca se
+// generarian ni se marcarian como tal.
+var _pasilloRangeACache=null;
+function getPasilloRangeA(){
+  if(_pasilloRangeACache) return _pasilloRangeACache;
+  var range={};
+  for(var i=0;i<SMAP_A.length;i++){
+    var u=SMAP_A[i];
+    var pp=parseInt(u.substring(1,3),10), cc=parseInt(u.substring(3,5),10);
+    if(isNaN(pp)||isNaN(cc)) continue;
+    if(!range[pp]) range[pp]={min:cc,max:cc};
+    else{ if(cc<range[pp].min) range[pp].min=cc; if(cc>range[pp].max) range[pp].max=cc; }
+  }
+  _pasilloRangeACache=range;
+  return range;
+}
+
 function buildVaciasA(occupied){
   var byP={};
   for(var key in occupied){
@@ -417,15 +438,15 @@ function buildVaciasA(occupied){
     byP[pp][cc+','+nn]=true;
   }
   var vacias=[];
-  var ps=Object.keys(byP).map(Number).sort(function(a,b){return a-b;});
+  var range=getPasilloRangeA();
+  var ps=Object.keys(range).map(Number).sort(function(a,b){return a-b;});
   for(var pi=0;pi<ps.length;pi++){
     var pp=ps[pi];
-    var allC=Object.keys(byP[pp]).map(function(k){return parseInt(k.split(',')[0]);});
-    allC.sort(function(a,b){return a-b;});
-    var minC=allC[0], maxC=allC[allC.length-1], z=pp<=5?'P':'G';
+    var occ=byP[pp]||{};
+    var minC=range[pp].min, maxC=range[pp].max, z=pp<=5?'P':'G';
     for(var cc=minC;cc<=maxC;cc++){
-      if(pp>=1&&pp<=5){for(var nn=0;nn<=1;nn++){var u='A'+pad2(pp)+pad2(cc)+nn;if(!byP[pp][cc+','+nn]&&!RESTRICTED[u])vacias.push([u,pp,z]);}}
-      else{var u='A'+pad2(pp)+pad2(cc)+'0';if(!byP[pp][cc+',0']&&!RESTRICTED[u])vacias.push([u,pp,z]);}
+      if(pp>=1&&pp<=5){for(var nn=0;nn<=1;nn++){var u='A'+pad2(pp)+pad2(cc)+nn;if(!occ[cc+','+nn]&&!RESTRICTED[u])vacias.push([u,pp,z]);}}
+      else{var u='A'+pad2(pp)+pad2(cc)+'0';if(!occ[cc+',0']&&!RESTRICTED[u])vacias.push([u,pp,z]);}
     }
   }
   return vacias;
