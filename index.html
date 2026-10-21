@@ -1,1067 +1,243 @@
 <!DOCTYPE html>
-<html lang="es">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=5.0, user-scalable=yes">
-<title>Almacen A + B</title>
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#1a1a2e">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Almacén A+B">
-<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
-<link rel="icon" href="icons/icon-192.png">
+<html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>OT Picking a cajas – Pedido POS</title>
 <style>
-*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f0f0f0;min-height:100vh;font-size:14px;touch-action:pan-x pan-y pinch-zoom}
-.hdr{background:#1a1a2e;color:#fff;padding:10px 14px;position:sticky;top:0;z-index:50;display:flex;align-items:center;justify-content:space-between}
-.hdr-title{font-size:15px;font-weight:600}
-.hdr-sub{font-size:10px;color:#8888aa;margin-top:1px}
-.tabs{display:flex;background:#16213e}
-.tab{flex:1;padding:10px 4px;font-size:11px;font-weight:600;color:#6677aa;text-align:center;cursor:pointer;letter-spacing:.04em;text-transform:uppercase;border-bottom:2px solid transparent;transition:all .15s}
-.tab.on{color:#e94560;border-bottom-color:#e94560}
-.body{padding:10px;max-width:600px;margin:0 auto}
-.stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px}
-.sc{background:#fff;border-radius:8px;padding:10px 8px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.08)}
-.sv{font-size:22px;font-weight:700;color:#1a1a2e}
-.sl{font-size:10px;color:#888;margin-top:2px;font-weight:500;text-transform:uppercase;letter-spacing:.04em}
-.sec-lbl{font-size:10px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
-.card{background:#fff;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,.08);overflow:hidden;margin-bottom:10px}
-.row{display:flex;align-items:center;padding:10px 12px;border-bottom:.5px solid #f0f0f0;gap:8px}
-.row:last-child{border-bottom:none}
-.rref{font-size:13px;font-weight:700;color:#1a1a2e}
-.rdesc{font-size:11px;color:#888;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:190px}
-.rmeta{font-size:10px;color:#aaa;margin-top:2px}
-.badge{display:inline-block;font-size:10px;font-weight:700;padding:3px 7px;border-radius:4px;white-space:nowrap}
-.bv{background:#fff0f0;color:#c0392b}
-.bg{background:#f0fff4;color:#27ae60}
-.bp{background:#f0f4ff;color:#0f3460}
-.bw{background:#fff8ec;color:#b8860b}
-.bs{background:#ecebff;color:#5b3ee8;margin-right:6px}
-.srch.scan-hit{border-color:#27ae60;background:#f6fffa}
-.panel{display:none}
-.panel.on{display:block}
-.srch{width:100%;padding:11px 14px;font-size:15px;border:1.5px solid #ddd;border-radius:8px;background:#fff;color:#1a1a2e;margin-bottom:10px;outline:none}
-.srch:focus{border-color:#e94560}
-.chips{display:flex;gap:6px;margin-bottom:10px}
-.chip{font-size:11px;padding:5px 12px;border-radius:20px;border:1.5px solid #ddd;cursor:pointer;color:#666;background:#fff;font-weight:600}
-.chip.on{background:#1a1a2e;color:#fff;border-color:#1a1a2e}
-.rot-bg{height:5px;border-radius:3px;background:#f0f0f0;flex:1}
-.rot-fill{height:5px;border-radius:3px}
-.rank{font-size:11px;font-weight:700;color:#aaa;min-width:20px}
-.empty{text-align:center;padding:30px;color:#aaa;font-size:13px}
-.ubi-big{font-size:18px;font-weight:800;color:#0f3460;letter-spacing:.05em}
-.frow{display:flex;gap:6px;margin-bottom:10px;overflow-x:auto;padding-bottom:2px;-webkit-overflow-scrolling:touch}
-.frow::-webkit-scrollbar{display:none}
-.fp{font-size:10px;font-weight:700;padding:5px 10px;border-radius:6px;border:1.5px solid #ddd;cursor:pointer;white-space:nowrap;background:#fff;color:#666}
-.fp.on{background:#0f3460;color:#fff;border-color:#0f3460}
-.btn-occ{border:none;background:#e8f8ee;color:#27ae60;font-size:11px;font-weight:700;padding:7px 10px;border-radius:7px;cursor:pointer;white-space:nowrap;flex-shrink:0}
-.btn-occ:active{background:#27ae60;color:#fff}
-.row-occ{background:#f8fff8}
-.btn-undo{border:none;background:#f0f0f0;color:#888;font-size:10px;font-weight:700;padding:6px 9px;border-radius:6px;cursor:pointer;white-space:nowrap;flex-shrink:0}
-.loading{text-align:center;padding:40px 20px}
-.loading-spin{width:32px;height:32px;border:3px solid #eee;border-top-color:#e94560;border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 12px}
-@keyframes spin{to{transform:rotate(360deg)}}
-.loading-txt{font-size:13px;color:#888}
-.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1a1a2e;color:#fff;font-size:13px;font-weight:600;padding:10px 20px;border-radius:20px;z-index:200;opacity:0;transition:opacity .2s;pointer-events:none;white-space:nowrap}
-.toast.show{opacity:1}
-.overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.6);z-index:100;align-items:flex-end;justify-content:center}
-.overlay.on{display:flex}
-.sheet{background:#fff;border-radius:14px 14px 0 0;padding:20px 16px 32px;width:100%;max-width:500px}
-.sheet-title{font-size:13px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
-.detail-ref{font-size:24px;font-weight:800;color:#1a1a2e;margin-bottom:4px}
-.detail-desc{font-size:13px;color:#666;margin-bottom:16px;line-height:1.4}
-.detail-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:.5px solid #f0f0f0}
-.detail-row:last-child{border-bottom:none}
-.detail-lbl{font-size:12px;color:#aaa;font-weight:500}
-.detail-val{font-size:14px;font-weight:700;color:#1a1a2e}
-.detail-ubi{font-size:22px;font-weight:800;color:#0f3460;letter-spacing:.05em}
-.btn-close{width:100%;padding:12px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;border:none;background:#f0f0f0;color:#555;margin-top:16px}
-.err-banner{background:#fff0f0;border:1.5px solid #f0b0b0;border-radius:8px;padding:14px;margin-bottom:10px;font-size:12px;color:#c0392b}
-.err-banner b{display:block;margin-bottom:4px;font-size:13px}
-.load-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(26,26,46,.85);z-index:300;flex-direction:column;align-items:center;justify-content:center;gap:16px}
-.load-overlay.on{display:flex}
-.load-spinner{width:48px;height:48px;border:4px solid rgba(255,255,255,.2);border-top-color:#e94560;border-radius:50%;animation:spin .8s linear infinite}
-.load-msg{color:#fff;font-size:14px;font-weight:600;letter-spacing:.02em}
-.load-sub{color:#8888aa;font-size:11px;margin-top:-10px}
-.offline-banner{display:none;background:#fff4e8;color:#b8860b;font-size:11px;font-weight:700;text-align:center;padding:6px 10px}
-.offline-banner.on{display:block}
-.install-btn{display:none;border:none;background:#e94560;color:#fff;font-size:11px;font-weight:700;padding:6px 10px;border-radius:6px;cursor:pointer;white-space:nowrap}
-.install-btn.on{display:inline-block}
-</style>
-</head>
-<body>
-
-<div class="hdr">
-  <div><div class="hdr-title">Almacen A + B</div><div class="hdr-sub" id="hsub">Cargando datos...</div></div>
-  <button class="install-btn" id="btnInstall" onclick="installApp()">+ Instalar app</button>
-</div>
-<div class="offline-banner" id="offlineBanner">Sin conexión — mostrando los últimos datos guardados en este dispositivo</div>
-<div class="tabs">
-  <div class="tab on" onclick="sw(0)">Vacias</div>
-  <div class="tab" onclick="sw(1)">Rotacion</div>
-  <div class="tab" onclick="sw(2)">Buscar</div>
-  <div class="tab" onclick="sw(3)">Sobrestock</div>
-  <div class="tab" onclick="sw(4)">Consultar (PDA)</div>
-</div>
-<div class="body">
-  <div class="frow" id="secTog" style="margin-bottom:2px"></div>
-  <div id="pv" class="panel on">
-    <div id="sRow" class="stats"></div>
-    <div class="frow" id="vFil"></div>
-    <p class="sec-lbl" id="vacLbl" style="display:none">Ubicaciones vacias</p>
-    <div id="lV"><div class="loading"><div class="loading-spin"></div><div class="loading-txt">Cargando almacen...</div></div></div>
-    <div id="secOcc" style="display:none">
-      <p class="sec-lbl" style="margin-top:8px;color:#27ae60">Marcadas como ocupadas</p>
-      <div id="lOcc"></div>
-    </div>
-  </div>
-  <div id="pr" class="panel">
-    <div class="chips">
-      <div class="chip on" id="chM" onclick="setRot(0)">1 mes</div>
-      <div class="chip" id="chT" onclick="setRot(1)">3 meses</div>
-    </div>
-    <div class="frow" id="rFil"></div>
-    <p class="sec-lbl" id="rotLbl" style="display:none">Top picking por rotacion</p>
-    <div id="lR"><div class="loading"><div class="loading-spin"></div><div class="loading-txt">Cargando almacen...</div></div></div>
-  </div>
-  <div id="pb" class="panel">
-    <input class="srch" id="si" type="search" placeholder="Codigo, descripcion o ubicacion..." oninput="doSearch(this.value)" autocomplete="off" autocorrect="off" spellcheck="false">
-    <div id="lB"><div class="empty">Escribe para buscar</div></div>
-  </div>
-</div>
-
-<div id="ps" class="panel">
-  <div style="background:#f0f4ff;color:#0f3460;font-size:11px;font-weight:600;padding:8px 10px;border-radius:8px;margin-bottom:10px">Este listado corresponde solo a Sector A. El Sector B no tiene zona de sobrestock separada en los datos.</div>
-  <div id="sRow2" class="stats"></div>
-  <div class="frow" id="sFil"></div>
-  <p class="sec-lbl" id="sLbl" style="display:none">Ubicaciones sobrestock libres</p>
-  <div id="lS"><div class="loading"><div class="loading-spin"></div><div class="loading-txt">Cargando...</div></div></div>
-  <div id="secSobOcc" style="display:none">
-    <p class="sec-lbl" style="margin-top:8px;color:#27ae60">Marcadas como ocupadas</p>
-    <div id="lSobOcc"></div>
-  </div>
-</div>
-<div id="pc" class="panel">
-  <input class="srch" id="siSob" type="search" inputmode="text" placeholder="Escanea o escribe una ubicacion (A o B), ej: A01052, B07061..." oninput="doSearchSob(this.value)" autocomplete="off" autocorrect="off" spellcheck="false">
-  <p class="sec-lbl" id="sobConsultaLbl" style="display:none">Mercancia en esa ubicacion</p>
-  <div id="lC"><div class="empty">Escanea o escribe una ubicacion para consultar (Sector A o B)</div></div>
-</div>
-<div class="toast" id="toast"></div>
-<div class="load-overlay" id="loadOverlay">
-  <div class="load-spinner"></div>
-  <div class="load-msg" id="loadMsg">Cargando datos...</div>
-  <div class="load-sub" id="loadSub">Procesando CSV</div>
-</div>
-
-<div class="overlay" id="detailModal" onclick="closeDetail(event)">
-  <div class="sheet" id="detailSheet">
-    <div class="sheet-title">Referencia</div>
-    <div class="detail-ref" id="dRef"></div>
-    <div class="detail-desc" id="dDesc"></div>
-    <div class="detail-row">
-      <span class="detail-lbl">Ubicacion picking</span>
-      <span class="detail-ubi" id="dUbi"></span>
-    </div>
-    <div class="detail-row">
-      <span class="detail-lbl">Pasillo</span>
-      <span class="detail-val" id="dPas"></span>
-    </div>
-    <div class="detail-row">
-      <span class="detail-lbl">Zona</span>
-      <span class="detail-val" id="dZona"></span>
-    </div>
-    <div class="detail-row">
-      <span class="detail-lbl">Rotacion mensual</span>
-      <span class="detail-val" id="dRotM"></span>
-    </div>
-    <div class="detail-row">
-      <span class="detail-lbl">Rotacion trimestral</span>
-      <span class="detail-val" id="dRotT"></span>
-    </div>
-    <div class="detail-row">
-      <span class="detail-lbl">Existencias</span>
-      <span class="detail-val" id="dEx"></span>
-    </div>
-    <button class="btn-close" onclick="document.getElementById('detailModal').className='overlay'">Cerrar</button>
-  </div>
-</div>
-
+:root{--bg:#f4f5f7;--card:#fff;--ink:#1c2430;--mut:#6b7686;--ac:#0b5cab;--ok:#1b8a4b;--okbg:#e4f5ea;--wa:#b26a00;--wabg:#fff3dc;--er:#c0392b;--erbg:#fde8e6;--bd:#d9dee5}
+*{box-sizing:border-box}body{margin:0;font:15px/1.4 system-ui,Segoe UI,Arial,sans-serif;background:var(--bg);color:var(--ink)}
+header{background:#12263f;color:#fff;padding:10px 14px;position:sticky;top:0;z-index:20}
+header h1{margin:0;font-size:16px;font-weight:600}header .sub{font-size:12px;opacity:.8}
+.bar{height:8px;background:#ffffff33;border-radius:4px;margin-top:6px;overflow:hidden}.bar i{display:block;height:100%;background:#4cd48a;width:0}
+.scan{display:flex;gap:6px;padding:8px 14px;background:#fff;border-bottom:1px solid var(--bd);position:sticky;top:62px;z-index:19}
+.scan input{flex:1;font-size:17px;padding:10px;border:2px solid var(--ac);border-radius:8px}
+#msg{padding:6px 14px;font-size:14px;min-height:30px}.m-ok{background:var(--okbg);color:var(--ok)}.m-wa{background:var(--wabg);color:var(--wa)}.m-er{background:var(--erbg);color:var(--er)}
+nav{display:flex;background:#fff;border-bottom:1px solid var(--bd);overflow-x:auto}nav button{flex:1;min-width:90px;border:0;background:none;padding:11px 8px;font-size:14px;border-bottom:3px solid transparent;cursor:pointer}
+nav button.on{border-color:var(--ac);color:var(--ac);font-weight:600}
+main{padding:12px 14px 80px;max-width:1000px;margin:auto}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:10px;margin-bottom:10px;overflow:hidden}
+.card.cur{border:2px solid var(--ac)}.card.done{opacity:.75;background:#f7fbf8}.card.skip{border-color:var(--wa)}
+.ch{display:flex;gap:10px;align-items:center;padding:10px 12px;cursor:pointer}
+.num{background:var(--ac);color:#fff;border-radius:50%;width:30px;height:30px;display:flex;align-items:center;justify-content:center;font-weight:700;flex:none}
+.done .num{background:var(--ok)}.skip .num{background:var(--wa)}
+.loc{font-size:20px;font-weight:700;letter-spacing:.5px}.tag{font-size:11px;padding:2px 7px;border-radius:10px;background:#e8edf3;color:var(--mut);margin-left:4px;white-space:nowrap}
+.tag.er{background:var(--erbg);color:var(--er)}.tag.wa{background:var(--wabg);color:var(--wa)}.tag.ok{background:var(--okbg);color:var(--ok)}
+.cb{padding:0 12px 12px;border-top:1px solid var(--bd)}
+.it{padding:10px 0;border-bottom:1px dashed var(--bd)}.it:last-child{border:0}
+.code{font-weight:700;font-size:16px}.desc{color:var(--mut);font-size:13px}
+.al{display:flex;align-items:center;gap:8px;padding:6px 8px;margin:4px 0;border-radius:8px;background:#f4f6f9;flex-wrap:wrap}
+.al.ok{background:var(--okbg)}.al.part{background:var(--wabg)}.al.zero{background:var(--erbg)}
+.al .box{font-weight:700;min-width:62px}.al .n{font-size:20px;font-weight:700;min-width:34px;text-align:center}.al .rm{flex:1;color:var(--mut);font-size:12px;min-width:90px}
+button.b{border:0;border-radius:8px;padding:9px 13px;font-size:14px;cursor:pointer;background:var(--ac);color:#fff}
+button.b.g{background:#e8edf3;color:var(--ink)}button.b.ok{background:var(--ok)}button.b.er{background:var(--er)}button.b.wa{background:var(--wa)}button.b.sm{padding:6px 9px;font-size:13px}
+.al input{width:56px;font-size:16px;padding:6px;border:1px solid var(--bd);border-radius:6px}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
+.pb{height:8px;background:#e3e8ee;border-radius:4px;overflow:hidden;margin:6px 0}.pb i{display:block;height:100%;background:var(--ok)}
+table{border-collapse:collapse;width:100%;font-size:13px}td,th{padding:5px 6px;border-bottom:1px solid var(--bd);text-align:left}
+.warn{background:var(--wabg);color:var(--wa);padding:6px 10px;border-radius:6px;font-size:13px;margin:6px 0}.err{background:var(--erbg);color:var(--er);padding:6px 10px;border-radius:6px;font-size:13px;margin:6px 0}
+svg{width:100%;height:auto;background:#fff;border:1px solid var(--bd);border-radius:10px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.bx{background:#fff;border:2px solid var(--bd);border-radius:10px;padding:8px;opacity:.6;position:relative}
+.bx .bp{font-size:22px;font-weight:800}.bx .br{font-size:12px;color:var(--mut);min-height:16px}.bx .bs{font-size:12px}
+.bx.done{background:var(--okbg);border-color:var(--ok);opacity:1}
+.bx.tgt{opacity:1;border:3px solid var(--ac);background:#eaf3ff;cursor:pointer;box-shadow:0 0 0 3px #0b5cab33}
+.bx.tgt.lock{opacity:.8;cursor:not-allowed}
+.bx .bt{font-size:15px;font-weight:700;background:#12263f;color:#fff;border-radius:6px;padding:2px 6px;display:inline-block;margin:3px 0}
+.bx .plus{font-size:34px;font-weight:800;color:var(--ac);line-height:1.1}
+.bx summary{font-size:11px;color:var(--mut);cursor:pointer}
+.hide{display:none}#prt{display:none}
+@media print{body>*:not(#prt){display:none!important}#prt{display:block!important}.lbl{page-break-after:always;border:4px solid #000;padding:20px;text-align:center}.lp{font-size:90px;font-weight:800}.lr{font-size:48px;font-weight:700}}
+</style></head><body>
+<header><h1>OT Picking a cajas · Pedido POS <span id="fecha" style="font-weight:400;opacity:.8"></span></h1>
+<div class="sub"><span id="hprog"></span> · Operario: <input id="oper" placeholder="nombre" style="width:130px;font-size:13px;padding:2px 6px;border-radius:5px;border:0"></div>
+<div class="bar"><i id="hbar"></i></div></header>
+<div class="scan"><input id="scan" autocomplete="off" autofocus inputmode="none" placeholder="Escanear EAN del artículo + Enter"><button class="b" id="scbtn">OK</button></div>
+<div id="msg"></div>
+<nav id="nav"><button data-t="carro">Carro</button><button data-t="pick" class="on">Picking</button><button data-t="ruta">Paradas</button><button data-t="cajas">Cajas</button><button data-t="mapa">Mapa</button><button data-t="inc">Incidencias</button><button data-t="fin">Finalizar</button></nav>
+<div id="guia" style="display:none;position:fixed;inset:0;background:#000a;z-index:50;overflow:auto"><div style="background:#fff;max-width:640px;margin:20px auto;border-radius:12px;padding:18px">
+<h2 style="margin-top:0">Cómo se hace este pedido</h2>
+<p>Vas a <b>preparar varias cajas a la vez</b> (una por cada POS del cliente) mientras recorres el almacén <b>una sola vez</b>. En cada ubicación coges un artículo y lo repartes entre las cajas que lo necesitan.</p>
+<ol style="line-height:1.6;padding-left:20px">
+<li><b>Antes de salir (pestaña Carro):</b> monta las cajas que indica la lista, pega a cada una su etiqueta (POS + nombre de la estancia), colócalas en el carro y márcalas como listas.</li>
+<li><b>Ve a la ubicación</b> que te indica la pantalla y <b>coge del estante las unidades totales</b> de ese artículo.</li>
+<li><b>Escanea el EAN</b> (código de barras) del artículo. Si el código no coincide, la pantalla se pone en rojo: <b>has cogido otro artículo</b>, déjalo y busca el correcto.</li>
+<li><b>Reparte:</b> la pantalla te dice, línea a línea, <i>«7 uds → caja POS16 · Eingang»</i>. Mete esas 7 unidades en la caja con la etiqueta POS16 y pulsa <b>«✓ Hecho»</b>. Repite con la siguiente línea.</li>
+<li>Cuando no te quede nada en la mano, la pantalla pasa <b>sola</b> al siguiente artículo.</li>
+<li>Al final todas las cajas del carro deben estar en <b>verde</b>. Pulsa Finalizar.</li>
+</ol>
+<p><b>Si hay problemas:</b></p>
+<ul style="line-height:1.6;padding-left:20px"><li><b>No hay suficientes unidades:</b> reparte las que haya con «parcial» o pulsa «No lo encuentro». La caja quedará marcada como incompleta; no pasa nada.</li>
+<li><b>El código de barras no se lee</b> o está dañado: pulsa «El código no se lee».</li>
+<li><b>No sabes dónde está:</b> pulsa «Dejar para después» y sigue; volverá al final.</li></ul>
+<p class="desc">Colores del carro: <b style="color:var(--ac)">azul</b> = esta caja recibe unidades ahora · <b style="color:var(--ok)">verde</b> = caja completa · gris = no recibe nada de este artículo.</p>
+<button class="b ok" style="width:100%;font-size:17px;padding:14px" onclick="cierraGuia()">Entendido, empezar</button></div></div><main id="app"></main><div id="prt"></div>
+<script type="application/json" id="ot-datos">{"boxes": [{"id": "B01-C1", "bloque": 1, "pos": "POS03", "room": "Master-Schrank", "caja": "7CAJ104", "cajaDim": "2100×150×150", "carrier": "DACHSER/DB SCHENKER", "virtual": false, "items": [{"code": "A4008170N", "j": 1, "n": 1, "desc": "16/4008-90"}]}, {"id": "B02-C1", "bloque": 2, "pos": "POS04", "room": "Master-Bad", "caja": "7CAJ6C", "cajaDim": "650×280×140", "carrier": "GLS", "virtual": false, "items": [{"code": "C3986190N", "j": 1, "n": 4, "desc": "3986/32 Ø32x300mm"}]}, {"id": "B03-C1", "bloque": 3, "pos": "POS05", "room": "Master-WC", "caja": "7CAJ20", "cajaDim": "1200×400×350", "carrier": "GLS", "virtual": false, "items": [{"code": "C4008070NDP", "j": 1, "n": 4, "desc": "600mm"}]}, {"id": "B04-X", "bloque": 4, "pos": "POS06", "room": "Master-WC", "caja": "SIN CAJA", "cajaDim": "Embalaje original (no cabe en ninguna caja)", "carrier": "", "virtual": true, "items": [{"code": "C4008170NDP", "j": 1, "n": 1, "desc": "1200mm"}]}, {"id": "B05-C1", "bloque": 5, "pos": "POS16", "room": "Eingang", "caja": "7CAJ6C", "cajaDim": "650×280×140", "carrier": "GLS", "virtual": false, "items": [{"code": "F3986090NDP", "j": 1, "n": 7, "desc": "3986"}, {"code": "K1002240N", "j": 1, "n": 5, "desc": "Profil 600 Schwarz"}, {"code": "K1002142N", "j": 1, "n": 5, "desc": "Verbinder Schwarz"}, {"code": "K1002140N", "j": 1, "n": 2, "desc": "Endkappe Schwarz"}, {"code": "K1002242N", "j": 1, "n": 1, "desc": "Profil 300 Schwarz"}, {"code": "86PLE0002", "j": 1, "n": 1, "desc": "Verbindungssystem 5 polig DALI"}, {"code": "1TUB0033N", "j": 1, "n": 1, "desc": "Verlängerung Schwarz"}, {"code": "K2005141N", "j": 1, "n": 6, "desc": "PVC Kabel 5 polig L850 DALI/Push"}, {"code": "K3000041T", "j": 1, "n": 7, "desc": "Ø60mm 50°"}, {"code": "6CON005", "j": 1, "n": 25, "desc": "Stecker"}]}, {"id": "B06-C1", "bloque": 6, "pos": "POS05", "room": "Spielraum", "caja": "7CAJ6A", "cajaDim": "545×545×420", "carrier": "GLS", "virtual": false, "items": [{"code": "5PANT404245BN", "j": 1, "n": 1, "desc": "Ø450x375mm"}]}, {"id": "B07-C1", "bloque": 7, "pos": "POS06", "room": "Sauna", "caja": "7CAJAGE21", "cajaDim": "1400×400×350", "carrier": "GLS", "virtual": false, "items": [{"code": "H8191080O", "j": 2, "n": 1, "desc": "8191/130"}]}, {"id": "B07-C2", "bloque": 7, "pos": "POS06", "room": "Sauna", "caja": "7CAJAGE21", "cajaDim": "1400×400×350", "carrier": "GLS", "virtual": false, "items": [{"code": "H8191080O", "j": 1, "n": 1, "desc": "8191/130"}]}, {"id": "B08-X", "bloque": 8, "pos": "POS07", "room": "Sauna", "caja": "SIN CAJA", "cajaDim": "Sin medidas: caja pendiente de decidir", "carrier": "", "virtual": true, "items": [{"code": "S8191182OSP", "j": 1, "n": 1, "desc": "Tischleuchte dekorativ, inkl. Switch on/off, max. 14W E27 LE"}, {"code": "5PANT0003B", "j": 1, "n": 1, "desc": ""}]}, {"id": "B09-C1", "bloque": 9, "pos": "POS08", "room": "Flur", "caja": "7CAJ6C", "cajaDim": "650×280×140", "carrier": "GLS", "virtual": false, "items": [{"code": "F3986090NDP", "j": 1, "n": 5, "desc": "3986"}, {"code": "K1002240N", "j": 1, "n": 4, "desc": "Profil 600 Schwarz"}, {"code": "K1002142N", "j": 1, "n": 3, "desc": "Verbinder Schwarz"}, {"code": "K1002140N", "j": 1, "n": 2, "desc": "Endkappe Schwarz"}, {"code": "86PLE0002", "j": 1, "n": 1, "desc": "Verbindungssystem 5 polig DALI"}, {"code": "1TUB0033N", "j": 1, "n": 1, "desc": "Verlängerung Schwarz"}, {"code": "K2005141N", "j": 1, "n": 4, "desc": "PVC Kabel 5 polig L850 DALI/Push"}, {"code": "K3000041T", "j": 1, "n": 5, "desc": "Ø60mm 50°"}, {"code": "6CON005", "j": 1, "n": 15, "desc": "Stecker"}]}, {"id": "B10-C1", "bloque": 10, "pos": "POS09", "room": "Weinkeller", "caja": "7CAJ3450110", "cajaDim": "1150×1150×210", "carrier": "DACHSER/DB SCHENKER", "virtual": false, "items": [{"code": "5PANT39137NN", "j": 1, "n": 1, "desc": "Ø680x70mm"}, {"code": "5PANT39135NN", "j": 1, "n": 2, "desc": "Ø500x55mm"}, {"code": "ACB62504", "j": 1, "n": 3, "desc": "62504"}, {"code": "P3986091NDP", "j": 1, "n": 1, "desc": "3986/60 Ø60x300mm"}, {"code": "K1002043N", "j": 1, "n": 1, "desc": "Ø60mm"}, {"code": "F3986090NDP", "j": 1, "n": 4, "desc": "3986"}, {"code": "K1002141N", "j": 1, "n": 1, "desc": "L-Verbinder 90 Schwarz"}, {"code": "K4000141T", "j": 1, "n": 1, "desc": "Ø60mm"}, {"code": "K1002240N", "j": 1, "n": 3, "desc": "Profil 600 Schwarz"}, {"code": "K1002142N", "j": 1, "n": 5, "desc": "Verbinder Schwarz"}, {"code": "K1002480N", "j": 1, "n": 3, "desc": "Kit Aplique Plafon E27 Schwarz"}, {"code": "K1002147N", "j": 1, "n": 1, "desc": "L-Verbinder 120 Schwarz"}, {"code": "K1002140N", "j": 1, "n": 2, "desc": "Endkappe Schwarz"}, {"code": "K1002242N", "j": 1, "n": 6, "desc": "Profil 300 Schwarz"}, {"code": "86PLE0002", "j": 1, "n": 1, "desc": "Verbindungssystem 5 polig DALI"}, {"code": "1TUB0033N", "j": 1, "n": 1, "desc": "Verlängerung Schwarz"}, {"code": "K1002340N", "j": 1, "n": 1, "desc": "L-Stück Wand Decke Schwarz"}, {"code": "K2005341N", "j": 1, "n": 1, "desc": "PVC Kable 3Polig L2250 ON/OFF"}, {"code": "K2005141N", "j": 1, "n": 2, "desc": "PVC Kabel 5 polig L850 DALI/Push"}, {"code": "K2005041N", "j": 1, "n": 5, "desc": "PVC Kabel 3 polig L550 On OFF"}, {"code": "K1002146N", "j": 1, "n": 1, "desc": "Verzierungsstück Schwarz"}, {"code": "K3000041T", "j": 1, "n": 4, "desc": "Ø60mm 50°"}, {"code": "6CON005", "j": 1, "n": 21, "desc": "Stecker"}]}, {"id": "B11-C1", "bloque": 11, "pos": "POS10", "room": "Abstellraum 1", "caja": "7CAJ6C", "cajaDim": "650×280×140", "carrier": "GLS", "virtual": false, "items": [{"code": "F3986090NDP", "j": 1, "n": 6, "desc": "3986"}, {"code": "K1002240N", "j": 1, "n": 5, "desc": "Profil 600 Schwarz"}, {"code": "K1002142N", "j": 1, "n": 4, "desc": "Verbinder Schwarz"}, {"code": "K1002140N", "j": 1, "n": 2, "desc": "Endkappe Schwarz"}, {"code": "86PLE0002", "j": 1, "n": 1, "desc": "Verbindungssystem 5 polig DALI"}, {"code": "1TUB0033N", "j": 1, "n": 1, "desc": "Verlängerung Schwarz"}, {"code": "K2005141N", "j": 1, "n": 5, "desc": "PVC Kabel 5 polig L850 DALI/Push"}, {"code": "K3000041T", "j": 1, "n": 6, "desc": "Ø60mm 50°"}, {"code": "6CON005", "j": 1, "n": 15, "desc": "Stecker"}]}, {"id": "B12-C1", "bloque": 12, "pos": "POS11", "room": "Abstellraum 2", "caja": "7CAJ6C", "cajaDim": "650×280×140", "carrier": "GLS", "virtual": false, "items": [{"code": "F3986090NDP", "j": 1, "n": 3, "desc": "3986"}, {"code": "K1002240N", "j": 1, "n": 2, "desc": "Profil 600 Schwarz"}, {"code": "K1002142N", "j": 1, "n": 1, "desc": "Verbinder Schwarz"}, {"code": "K1002140N", "j": 1, "n": 2, "desc": "Endkappe Schwarz"}, {"code": "86PLE0002", "j": 1, "n": 1, "desc": "Verbindungssystem 5 polig DALI"}, {"code": "1TUB0033N", "j": 1, "n": 1, "desc": "Verlängerung Schwarz"}, {"code": "K2005141N", "j": 1, "n": 2, "desc": "PVC Kabel 5 polig L850 DALI/Push"}, {"code": "K3000041T", "j": 1, "n": 3, "desc": "Ø60mm 50°"}]}, {"id": "B13-C1", "bloque": 13, "pos": "POS12", "room": "Abstellraum 3", "caja": "7CAJ6C", "cajaDim": "650×280×140", "carrier": "GLS", "virtual": false, "items": [{"code": "F3986090NDP", "j": 1, "n": 7, "desc": "3986"}, {"code": "K1002240N", "j": 1, "n": 6, "desc": "Profil 600 Schwarz"}, {"code": "K1002142N", "j": 1, "n": 5, "desc": "Verbinder Schwarz"}, {"code": "K1002140N", "j": 1, "n": 2, "desc": "Endkappe Schwarz"}, {"code": "86PLE0002", "j": 1, "n": 1, "desc": "Verbindungssystem 5 polig DALI"}, {"code": "1TUB0033N", "j": 1, "n": 1, "desc": "Verlängerung Schwarz"}, {"code": "K2005141N", "j": 1, "n": 6, "desc": "PVC Kabel 5 polig L850 DALI/Push"}, {"code": "K3000041T", "j": 1, "n": 7, "desc": "Ø60mm 50°"}, {"code": "6CON005", "j": 1, "n": 20, "desc": "Stecker"}]}, {"id": "B14-C1", "bloque": 14, "pos": "POS02", "room": "Waschraum", "caja": "7CAJ6C", "cajaDim": "650×280×140", "carrier": "GLS", "virtual": false, "items": [{"code": "F3986090NDP", "j": 1, "n": 4, "desc": "3986"}, {"code": "K1002240N", "j": 1, "n": 3, "desc": "Profil 600 Schwarz"}, {"code": "K1002142N", "j": 1, "n": 2, "desc": "Verbinder Schwarz"}, {"code": "K1002140N", "j": 1, "n": 2, "desc": "Endkappe Schwarz"}, {"code": "86PLE0002", "j": 1, "n": 1, "desc": "Verbindungssystem 5 polig DALI"}, {"code": "1TUB0033N", "j": 1, "n": 1, "desc": "Verlängerung Schwarz"}, {"code": "K2005141N", "j": 1, "n": 3, "desc": "PVC Kabel 5 polig L850 DALI/Push"}, {"code": "K3000041T", "j": 1, "n": 4, "desc": "Ø60mm 50°"}, {"code": "6CON005", "j": 1, "n": 10, "desc": "Stecker"}]}], "stops": [{"id": 1, "zona": "A", "loc": "A03 01 0", "cod": "A03010", "niv": 0, "bloque": 3, "items": [{"code": "K1002146N", "desc": "Verzierungsstück Schwarz", "need": 1, "disp": 250, "alloc": [{"box": "B10-C1", "pos": "POS09", "room": "Weinkeller", "j": 1, "n": 1}], "otras": [], "sinprim": false}]}, {"id": 2, "zona": "A", "loc": "A04 05 0", "cod": "A04050", "niv": 0, "bloque": 4, "items": [{"code": "1TUB0033N", "desc": "Verlängerung Schwarz", "need": 7, "disp": 116, "alloc": [{"box": "B05-C1", "pos": "POS16", "room": "Eingang", "j": 1, "n": 1}, {"box": "B09-C1", "pos": "POS08", "room": "Flur", "j": 1, "n": 1}, {"box": "B10-C1", "pos": "POS09", "room": "Weinkeller", "j": 1, "n": 1}, {"box": "B11-C1", "pos": "POS10", "room": "Abstellraum 1", "j": 1, "n": 1}, {"box": "B12-C1", "pos": "POS11", "room": "Abstellraum 2", "j": 1, "n": 1}, {"box": "B13-C1", "pos": "POS12", "room": "Abstellraum 3", "j": 1, "n": 1}, {"box": "B14-C1", "pos": "POS02", "room": "Waschraum", "j": 1, "n": 1}], "otras": [], "sinprim": false}]}, {"id": 3, "zona": "A", "loc": "A03 15 1", "cod": "A03151", "niv": 1, "bloque": 3, "items": [{"code": "K3000041T", "desc": "Ø60mm 50°", "need": 36, "disp": 16, "alloc": [{"box": "B05-C1", "pos": "POS16", "room": "Eingang", "j": 1, "n": 7}, {"box": "B09-C1", "pos": "POS08", "room": "Flur", "j": 1, "n": 5}, {"box": "B10-C1", "pos": "POS09", "room": "Weinkeller", "j": 1, "n": 4}, {"box": "B11-C1", "pos": "POS10", "room": "Abstellraum 1", "j": 1, "n": 6}, {"box": "B12-C1", "pos": "POS11", "room": "Abstellraum 2", "j": 1, "n": 3}, {"box": "B13-C1", "pos": "POS12", "room": "Abstellraum 3", "j": 1, "n": 7}, {"box": "B14-C1", "pos": "POS02", "room": "Waschraum", "j": 1, "n": 4}], "otras": [], "sinprim": false}]}, {"id": 4, "zona": "A", "loc": "A04 16 1", "cod": "A04161", "niv": 1, "bloque": 4, "items": [{"code": "K1002141N", "desc": "L-Verbinder 90 Schwarz", "need": 1, "disp": 197, "alloc": [{"box": "B10-C1", "pos": "POS09", "room": "Weinkeller", "j": 1, "n": 1}], "otras": [], "sinprim": false}]}, {"id": 5, "zona": "A", "loc": "A03 22 0", "cod": "A03220", "niv": 0, "bloque": 3, "items": [{"code": "K1002480N", "desc": "Kit Aplique Plafon E27 Schwarz", "need": 3, "disp": 462, "alloc": [{"box": "B10-C1", "pos": "POS09", "room": "Weinkeller", "j": 1, "n": 3}], "otras": [], "sinprim": false}]}, {"id": 6, "zona": "A", "loc": "A03 27 0", "cod": "A03270", "niv": 0, "bloque": 3, "items": [{"code": "K1002147N", "desc": "L-Verbinder 120 Schwarz", "need": 1, "disp": 287, "alloc": [{"box": "B10-C1", "pos": "POS09", "room": "Weinkeller", "j": 1, "n": 1}], "otras": [], "sinprim": false}]}, {"id": 7, "zona": "A", "loc": "A06 38 1", "cod": "A06381", "niv": 1, "bloque": 6, "items": [{"code": "K1002340N", "desc": "L-Stück Wand Decke Schwarz", "need": 1, "disp": 79, "alloc": [{"box": "B10-C1", "pos": "POS09", "room": "Weinkeller", "j": 1, "n": 1}], "otras": [], "sinprim": false}]}, {"id": 8, "zona": "A", "loc": "A05 29 0", "cod": "A05290", "niv": 0, "bloque": 5, "items": [{"code": "5PANT404245BN", "desc": "Ø450x375mm", "need": 1, "disp": 25, "alloc": [{"box": "B06-C1", "pos": "POS05", "room": "Spielraum", "j": 1, "n": 1}], "otras": ["A08 10 2", "A05 27 2 · 16 uds"], "sinprim": false}]}, {"id": 9, "zona": "A", "loc": "A08 37 3", "cod": "A08373", "niv": 3, "bloque": 8, "items": [{"code": "F3986090NDP", "desc": "3986", "need": 36, "disp": -43, "alloc": [{"box": "B05-C1", "pos": "POS16", "room": "Eingang", "j": 1, "n": 7}, {"box": "B09-C1", "pos": "POS08", "room": "Flur", "j": 1, "n": 5}, {"box": "B10-C1", "pos": "POS09", "room": "Weinkeller", "j": 1, "n": 4}, {"box": "B11-C1", "pos": "POS10", "room": "Abstellraum 1", "j": 1, "n": 6}, {"box": "B12-C1", "pos": "POS11", "room": "Abstellraum 2", "j": 1, "n": 3}, {"box": "B13-C1", "pos": "POS12", "room": "Abstellraum 3", "j": 1, "n": 7}, {"box": "B14-C1", "pos": "POS02", "room": "Waschraum", "j": 1, "n": 4}], "otras": [], "sinprim": false}]}, {"id": 10, "zona": "A", "loc": "A10 29 1", "cod": "A10291", "niv": 1, "bloque": 10, "items": [{"code": "K2005341N", "desc": "PVC Kable 3Polig L2250 ON/OFF", "need": 1, "disp": -3, "alloc": [{"box": "B10-C1", "pos": "POS09", "room": "Weinkeller", "j": 1, "n": 1}], "otras": [], "sinprim": false}, {"code": "K2005041N", "desc": "PVC Kabel 3 polig L550 On OFF", "need": 5, "disp": 20, "alloc": [{"box": "B10-C1", "pos": "POS09", "room": "Weinkeller", "j": 1, "n": 5}], "otras": [], "sinprim": false}]}, {"id": 11, "zona": "A", "loc": "A12 26 1", "cod": "A12261", "niv": 1, "bloque": 12, "items": [{"code": "S8191182OSP", "desc": "Tischleuchte dekorativ, inkl. Switch on/off, max. 14W E27 LE", "need": 1, "disp": 9, "alloc": [{"box": "B08-X", "pos": "POS07", "room": "Sauna", "j": 1, "n": 1}], "otras": [], "sinprim": false}]}, {"id": 12, "zona": "A", "loc": "A14 05 1", "cod": "A14051", "niv": 1, "bloque": 14, "items": [{"code": "H8191080O", "desc": "8191/130", "need": 1, "disp": 1, "alloc": [{"box": "B07-C1", "pos": "POS06", "room": "Sauna", "j": 2, "n": 1}, {"box": "B07-C2", "pos": "POS06", "room": "Sauna", "j": 1, "n": 1}], "otras": [], "sinprim": false}]}, {"id": 13, "zona": "A", "loc": "A15 06 0", "cod": "A15060", "niv": 0, "bloque": 15, "items": [{"code": "5PANT39135NN", "desc": "Ø500x55mm", "need": 2, "disp": 44, "alloc": [{"box": "B10-C1", "pos": "POS09", "room": "Weinkeller", "j": 1, "n": 2}], "otras": ["A15 05 2 · 15 uds"], "sinprim": false}]}, {"id": 14, "zona": "A", "loc": "A15 09 0", "cod": "A15090", "niv": 0, "bloque": 15, "items": [{"code": "5PANT0003B", "desc": "", "need": 1, "disp": 21, "alloc": [{"box": "B08-X", "pos": "POS07", "room": "Sauna", "j": 1, "n": 1}], "otras": [], "sinprim": false}]}, {"id": 15, "zona": "A", "loc": "A15 33 0", "cod": "A15330", "niv": 0, "bloque": 15, "items": [{"code": "A4008170N", "desc": "16/4008-90", "need": 1, "disp": 49, "alloc": [{"box": "B01-C1", "pos": "POS03", "room": "Master-Schrank", "j": 1, "n": 1}], "otras": ["A11 16 1 · 24 uds"], "sinprim": false}]}, {"id": 16, "zona": "A", "loc": "A15 34 0", "cod": "A15340", "niv": 0, "bloque": 15, "items": [{"code": "5PANT39137NN", "desc": "Ø680x70mm", "need": 1, "disp": 66, "alloc": [{"box": "B10-C1", "pos": "POS09", "room": "Weinkeller", "j": 1, "n": 1}], "otras": ["A14 14 2 · 20 uds"], "sinprim": false}]}, {"id": 17, "zona": "A", "loc": "A14 36 2", "cod": "A14362", "niv": 2, "bloque": 14, "items": [{"code": "K2005141N", "desc": "PVC Kabel 5 polig L850 DALI/Push", "need": 28, "disp": 15, "alloc": [{"box": "B05-C1", "pos": "POS16", "room": "Eingang", "j": 1, "n": 6}, {"box": "B09-C1", "pos": "POS08", "room": "Flur", "j": 1, "n": 4}, {"box": "B10-C1", "pos": "POS09", "room": "Weinkeller", "j": 1, "n": 2}, {"box": "B11-C1", "pos": "POS10", "room": "Abstellraum 1", "j": 1, "n": 5}, {"box": "B12-C1", "pos": "POS11", "room": "Abstellraum 2", "j": 1, "n": 2}, {"box": "B13-C1", "pos": "POS12", "room": "Abstellraum 3", "j": 1, "n": 6}, {"box": "B14-C1", "pos": "POS02", "room": "Waschraum", "j": 1, "n": 3}], "otras": [], "sinprim": false}]}, {"id": 18, "zona": "A", "loc": "A01 28 0", "cod": "A01280", "niv": 0, "bloque": 1, "items": [{"code": "K1002242N", "desc": "Profil 300 Schwarz", "need": 7, "disp": 348, "alloc": [{"box": "B05-C1", "pos": "POS16", "room": "Eingang", "j": 1, "n": 1}, {"box": "B10-C1", "pos": "POS09", "room": "Weinkeller", "j": 1, "n": 6}], "otras": [], "sinprim": false}]}, {"id": 19, "zona": "A", "loc": "A01 19 1", "cod": "A01191", "niv": 1, "bloque": 1, "items": [{"code": "K1002240N", "desc": "Profil 600 Schwarz", "need": 28, "disp": 474, "alloc": [{"box": "B05-C1", "pos": "POS16", "room": "Eingang", "j": 1, "n": 5}, {"box": "B09-C1", "pos": "POS08", "room": "Flur", "j": 1, "n": 4}, {"box": "B10-C1", "pos": "POS09", "room": "Weinkeller", "j": 1, "n": 3}, {"box": "B11-C1", "pos": "POS10", "room": "Abstellraum 1", "j": 1, "n": 5}, {"box": "B12-C1", "pos": "POS11", "room": "Abstellraum 2", "j": 1, "n": 2}, {"box": "B13-C1", "pos": "POS12", "room": "Abstellraum 3", "j": 1, "n": 6}, {"box": "B14-C1", "pos": "POS02", "room": "Waschraum", "j": 1, "n": 3}], "otras": ["A01 18 2 · 300 uds"], "sinprim": false}]}, {"id": 20, "zona": "A", "loc": "A02 18 1", "cod": "A02181", "niv": 1, "bloque": 2, "items": [{"code": "K4000141T", "desc": "Ø60mm", "need": 1, "disp": 81, "alloc": [{"box": "B10-C1", "pos": "POS09", "room": "Weinkeller", "j": 1, "n": 1}], "otras": [], "sinprim": false}]}, {"id": 21, "zona": "A", "loc": "A01 10 1", "cod": "A01101", "niv": 1, "bloque": 1, "items": [{"code": "K1002142N", "desc": "Verbinder Schwarz", "need": 25, "disp": 342, "alloc": [{"box": "B05-C1", "pos": "POS16", "room": "Eingang", "j": 1, "n": 5}, {"box": "B09-C1", "pos": "POS08", "room": "Flur", "j": 1, "n": 3}, {"box": "B10-C1", "pos": "POS09", "room": "Weinkeller", "j": 1, "n": 5}, {"box": "B11-C1", "pos": "POS10", "room": "Abstellraum 1", "j": 1, "n": 4}, {"box": "B12-C1", "pos": "POS11", "room": "Abstellraum 2", "j": 1, "n": 1}, {"box": "B13-C1", "pos": "POS12", "room": "Abstellraum 3", "j": 1, "n": 5}, {"box": "B14-C1", "pos": "POS02", "room": "Waschraum", "j": 1, "n": 2}], "otras": [], "sinprim": false}]}, {"id": 22, "zona": "A", "loc": "A01 06 0", "cod": "A01060", "niv": 0, "bloque": 1, "items": [{"code": "K1002140N", "desc": "Endkappe Schwarz", "need": 14, "disp": 356, "alloc": [{"box": "B05-C1", "pos": "POS16", "room": "Eingang", "j": 1, "n": 2}, {"box": "B09-C1", "pos": "POS08", "room": "Flur", "j": 1, "n": 2}, {"box": "B10-C1", "pos": "POS09", "room": "Weinkeller", "j": 1, "n": 2}, {"box": "B11-C1", "pos": "POS10", "room": "Abstellraum 1", "j": 1, "n": 2}, {"box": "B12-C1", "pos": "POS11", "room": "Abstellraum 2", "j": 1, "n": 2}, {"box": "B13-C1", "pos": "POS12", "room": "Abstellraum 3", "j": 1, "n": 2}, {"box": "B14-C1", "pos": "POS02", "room": "Waschraum", "j": 1, "n": 2}], "otras": [], "sinprim": false}]}, {"id": 23, "zona": "A", "loc": "A02 04 0", "cod": "A02040", "niv": 0, "bloque": 2, "items": [{"code": "ACB62504", "desc": "62504", "need": 3, "disp": 71, "alloc": [{"box": "B10-C1", "pos": "POS09", "room": "Weinkeller", "j": 1, "n": 3}], "otras": [], "sinprim": false}]}, {"id": 24, "zona": "A", "loc": "A02 01 1", "cod": "A02011", "niv": 1, "bloque": 2, "items": [{"code": "K1002043N", "desc": "Ø60mm", "need": 1, "disp": 616, "alloc": [{"box": "B10-C1", "pos": "POS09", "room": "Weinkeller", "j": 1, "n": 1}], "otras": ["A02 13 2 · 80 uds"], "sinprim": false}]}, {"id": 25, "zona": "B", "loc": "B05 05 1", "cod": "B05051", "niv": 1, "bloque": 5, "items": [{"code": "86PLE0002", "desc": "Verbindungssystem 5 polig DALI", "need": 7, "disp": 104, "alloc": [{"box": "B05-C1", "pos": "POS16", "room": "Eingang", "j": 1, "n": 1}, {"box": "B09-C1", "pos": "POS08", "room": "Flur", "j": 1, "n": 1}, {"box": "B10-C1", "pos": "POS09", "room": "Weinkeller", "j": 1, "n": 1}, {"box": "B11-C1", "pos": "POS10", "room": "Abstellraum 1", "j": 1, "n": 1}, {"box": "B12-C1", "pos": "POS11", "room": "Abstellraum 2", "j": 1, "n": 1}, {"box": "B13-C1", "pos": "POS12", "room": "Abstellraum 3", "j": 1, "n": 1}, {"box": "B14-C1", "pos": "POS02", "room": "Waschraum", "j": 1, "n": 1}], "otras": [], "sinprim": false}]}, {"id": 26, "zona": "?", "loc": "1B033 - A0", "cod": "1B033 - A0", "niv": null, "bloque": null, "items": [{"code": "6CON005", "desc": "Stecker", "need": 106, "disp": 1311, "alloc": [{"box": "B05-C1", "pos": "POS16", "room": "Eingang", "j": 1, "n": 25}, {"box": "B09-C1", "pos": "POS08", "room": "Flur", "j": 1, "n": 15}, {"box": "B10-C1", "pos": "POS09", "room": "Weinkeller", "j": 1, "n": 21}, {"box": "B11-C1", "pos": "POS10", "room": "Abstellraum 1", "j": 1, "n": 15}, {"box": "B13-C1", "pos": "POS12", "room": "Abstellraum 3", "j": 1, "n": 20}, {"box": "B14-C1", "pos": "POS02", "room": "Waschraum", "j": 1, "n": 10}], "otras": ["1B034"], "sinprim": false}]}, {"id": 27, "zona": "SIN", "loc": null, "cod": null, "niv": null, "bloque": null, "items": [{"code": "C3986190N", "desc": "3986/32 Ø32x300mm", "need": 4, "disp": -4, "alloc": [{"box": "B02-C1", "pos": "POS04", "room": "Master-Bad", "j": 1, "n": 4}], "otras": [], "sinprim": []}, {"code": "C4008070NDP", "desc": "600mm", "need": 4, "disp": -14, "alloc": [{"box": "B03-C1", "pos": "POS05", "room": "Master-WC", "j": 1, "n": 4}], "otras": [], "sinprim": []}, {"code": "C4008170NDP", "desc": "1200mm", "need": 1, "disp": -1, "alloc": [{"box": "B04-X", "pos": "POS06", "room": "Master-WC", "j": 1, "n": 1}], "otras": [], "sinprim": []}, {"code": "P3986091NDP", "desc": "3986/60 Ø60x300mm", "need": 1, "disp": -1, "alloc": [{"box": "B10-C1", "pos": "POS09", "room": "Weinkeller", "j": 1, "n": 1}], "otras": [], "sinprim": []}]}], "path": [[83.5, 7.0], [83.5, 12.0], [83.5, 16.0], [83.5, 26.0], [83.5, 27.0], [83.5, 33.0], [83.5, 38.0], [83.5, 47.0], [70.5, 47.0], [70.5, 44.0], [70.5, 40.0], [70.5, 47.0], [58.5, 47.0], [58.5, 43.0], [58.5, 47.0], [46.5, 47.0], [46.5, 43.0], [46.5, 47.0], [34.5, 47.0], [34.5, 32.0], [34.5, 6.0], [22.5, 6.0], [22.5, 11.0], [22.5, 6.0], [10.5, 6.0], [10.5, 12.0], [10.5, 15.0], [10.5, 39.0], [10.5, 40.0], [10.5, 47.0], [22.5, 47.0], [22.5, 42.0], [22.5, 47.0], [96.5, 47.0], [96.5, 39.0], [96.5, 30.0], [96.5, 29.0], [96.5, 21.0], [96.5, 17.0], [96.5, 15.0], [96.5, 12.0], [96.5, 6.0], [83.5, 6.0], [83.5, 7.0]], "blocks": [{"b": 1, "r0": 99, "r1": 102, "c0": 12, "c1": 46}, {"b": 2, "r0": 91, "r1": 94, "c0": 12, "c1": 44}, {"b": 3, "r0": 86, "r1": 89, "c0": 12, "c1": 44}, {"b": 4, "r0": 78, "r1": 81, "c0": 12, "c1": 44}, {"b": 5, "r0": 73, "r1": 76, "c0": 12, "c1": 43}, {"b": 6, "r0": 65, "r1": 68, "c0": 7, "c1": 44}, {"b": 7, "r0": 61, "r1": 63, "c0": 7, "c1": 43}, {"b": 8, "r0": 53, "r1": 56, "c0": 7, "c1": 43}, {"b": 9, "r0": 49, "r1": 51, "c0": 7, "c1": 42}, {"b": 10, "r0": 41, "r1": 44, "c0": 7, "c1": 43}, {"b": 11, "r0": 37, "r1": 39, "c0": 7, "c1": 42}, {"b": 12, "r0": 29, "r1": 32, "c0": 7, "c1": 42}, {"b": 13, "r0": 25, "r1": 27, "c0": 7, "c1": 41}, {"b": 14, "r0": 17, "r1": 20, "c0": 7, "c1": 42}, {"b": 15, "r0": 13, "r1": 15, "c0": 7, "c1": 41}, {"b": 16, "r0": 6, "r1": 8, "c0": 7, "c1": 42}], "stopsXY": {"1": [83.5, 12.0], "2": [83.5, 16.0], "3": [83.5, 26.0], "4": [83.5, 27.0], "5": [83.5, 33.0], "6": [83.5, 38.0], "7": [70.5, 44.0], "8": [70.5, 40.0], "9": [58.5, 43.0], "10": [46.5, 43.0], "11": [34.5, 32.0], "12": [22.5, 11.0], "13": [10.5, 12.0], "14": [10.5, 15.0], "15": [10.5, 39.0], "16": [10.5, 40.0], "17": [22.5, 42.0], "18": [96.5, 39.0], "19": [96.5, 30.0], "20": [96.5, 29.0], "21": [96.5, 21.0], "22": [96.5, 17.0], "23": [96.5, 15.0], "24": [96.5, 12.0]}, "exp": [83.5, 7.0], "sinCodigo": [{"pos": "POS04", "room": "Master-Bad", "desc": "Einbaurosette für Holzdecke, flächenbündig, Farbe schwarz", "units": 4}, {"pos": "POS05", "room": "Master-WC", "desc": "Einbaurosette für Gipskartondecke, flächenbündig, Farbe weiß", "units": 2}, {"pos": "POS05", "room": "Master-WC", "desc": "Einbaurosette für Holzdecke, flächenbündig, Farbe schwarz", "units": 2}, {"pos": "POS09", "room": "Weinkeller", "desc": "DALI-Dimmer, 1-80W, Soft Start,IP20 für Einbau in Abzweigdose", "units": 1}], "totalUnits": 330, "ean": {"1TUB0033N": "8430390379899", "5PANT0003B": "8430390337653", "5PANT39135NN": "8430390318232", "5PANT39137NN": "8430390318263", "5PANT404245BN": "8430390433980", "6CON005": "8430390340134", "86PLE0002": "8430390379974", "A4008170N": "8430390424230", "ACB62504": "8424627625040", "C3986190N": "8430390400449", "C4008070NDP": "8430390436370", "C4008170NDP": "8430390436394", "F3986090NDP": "8430390401439", "H8191080O": "8430390284759", "K1002043N": "8430390393819", "K1002140N": "8430390367117", "K1002141N": "8430390367131", "K1002142N": "8430390367155", "K1002146N": "8430390367230", "K1002147N": "8430390388631", "K1002240N": "8430390367278", "K1002242N": "8430390370742", "K1002340N": "8430390393710", "K1002480N": "8430390396261", "K2005041N": "8430390396032", "K2005141N": "8430390396070", "K2005341N": "8430390396094", "K3000041T": "8430390393932", "K4000141T": "8430390396865", "P3986091NDP": "8430390402009", "S8191182OSP": "8430390373729"}, "id": "POS-2026-10-20", "fecha": "20/10/2026", "ruta": {"largo": 386, "ingenuo": 1162}, "avisos": ["Cajas B04-X (embalaje original) y B08-X (sin medidas) son virtuales: no son cajas de cartón de la lista.", "Parada 26 (6CON005): la ubicación 1B033 no figura en el mapa; se visita tras el Almacén A.", "Parada 25 está en Almacén B; se visita después del Almacén A (sin mapa B).", "Parada 27 agrupa artículos sin ubicación y con stock disponible negativo: pueden no existir físicamente.", "Parada 9 (F3986090NDP): solo hay stock en ubicación de reserva y DISP es negativo (-43).", "Rosetas y dimmer sin código de artículo no se pueden pickear: ver lista en esta pestaña.", "H8191080O consta de 2 bultos; se reparten en cajas distintas (campo «bulto»)."]}</script>
+<script type="application/json" id="ot-estado">null</script>
+<script type="application/json" id="ot-resultado">null</script>
 <script>
-var D=[], V={A:[],B:[]};
-var rotMode=0, vacPas=0, rotPas=0;
-var SMAP_A=["A01012", "A01013", "A01022", "A01023", "A01032", "A01033", "A01042", "A01043", "A01052", "A01053", "A01062", "A01063", "A01072", "A01073", "A01082", "A01083", "A01092", "A01093", "A01102", "A01103", "A01112", "A01113", "A01122", "A01123", "A01132", "A01133", "A01142", "A01143", "A01152", "A01153", "A01162", "A01163", "A01172", "A01173", "A01182", "A01183", "A01192", "A01193", "A01202", "A01203", "A01212", "A01213", "A01222", "A01223", "A01232", "A01233", "A01242", "A01243", "A01252", "A01253", "A01262", "A01263", "A01272", "A01273", "A01282", "A01283", "A01292", "A01293", "A01302", "A01303", "A01312", "A01313", "A01322", "A01323", "A01332", "A01333", "A01342", "A01343", "A01352", "A01353", "A02012", "A02013", "A02022", "A02023", "A02032", "A02033", "A02042", "A02043", "A02052", "A02053", "A02062", "A02063", "A02072", "A02073", "A02082", "A02083", "A02092", "A02093", "A02102", "A02103", "A02112", "A02113", "A02122", "A02123", "A02132", "A02133", "A02142", "A02143", "A02152", "A02153", "A02162", "A02163", "A02172", "A02173", "A02182", "A02183", "A02192", "A02193", "A02202", "A02203", "A02212", "A02213", "A02222", "A02223", "A02232", "A02233", "A02242", "A02243", "A02252", "A02253", "A02262", "A02263", "A02272", "A02273", "A02282", "A02283", "A02292", "A02293", "A02302", "A02303", "A02312", "A02313", "A02322", "A02323", "A02332", "A02333", "A03012", "A03013", "A03022", "A03023", "A03032", "A03033", "A03042", "A03043", "A03052", "A03053", "A03062", "A03063", "A03072", "A03073", "A03082", "A03083", "A03092", "A03093", "A03102", "A03103", "A03112", "A03113", "A03122", "A03123", "A03132", "A03133", "A03142", "A03143", "A03152", "A03153", "A03162", "A03163", "A03172", "A03173", "A03182", "A03183", "A03192", "A03193", "A03202", "A03203", "A03212", "A03213", "A03222", "A03223", "A03232", "A03233", "A03242", "A03243", "A03252", "A03253", "A03262", "A03263", "A03272", "A03273", "A03282", "A03283", "A03292", "A03293", "A03302", "A03303", "A03312", "A03313", "A03322", "A03323", "A03332", "A03333", "A04012", "A04013", "A04022", "A04023", "A04032", "A04033", "A04042", "A04043", "A04052", "A04053", "A04062", "A04063", "A04072", "A04073", "A04082", "A04083", "A04092", "A04093", "A04102", "A04103", "A04112", "A04113", "A04122", "A04123", "A04132", "A04133", "A04142", "A04143", "A04152", "A04153", "A04162", "A04163", "A04172", "A04173", "A04182", "A04183", "A04192", "A04193", "A04202", "A04203", "A04212", "A04213", "A04222", "A04223", "A04232", "A04233", "A04242", "A04243", "A04252", "A04253", "A04262", "A04263", "A04272", "A04273", "A04282", "A04283", "A04292", "A04293", "A04302", "A04303", "A04312", "A04313", "A04322", "A04323", "A05012", "A05013", "A05022", "A05023", "A05032", "A05033", "A05042", "A05043", "A05052", "A05053", "A05062", "A05063", "A05072", "A05073", "A05082", "A05083", "A05092", "A05093", "A05102", "A05103", "A05112", "A05113", "A05122", "A05123", "A05132", "A05133", "A05142", "A05143", "A05152", "A05153", "A05162", "A05163", "A05172", "A05173", "A05182", "A05183", "A05192", "A05193", "A05202", "A05212", "A05222", "A05232", "A05242", "A05252", "A05262", "A05272", "A05282", "A05292", "A05302", "A05312", "A05322", "A06012", "A06022", "A06032", "A06042", "A06052", "A06062", "A06072", "A06082", "A06092", "A06102", "A06112", "A06122", "A06132", "A06142", "A06152", "A06162", "A06172", "A06182", "A06192", "A06202", "A06212", "A06222", "A06232", "A06242", "A06252", "A06262", "A06272", "A06282", "A06292", "A06302", "A06312", "A06322", "A06332", "A06342", "A06352", "A06362", "A06372", "A07012", "A07022", "A07032", "A07042", "A07052", "A07062", "A07072", "A07082", "A07092", "A07102", "A07112", "A07122", "A07132", "A07142", "A07152", "A07162", "A07172", "A07182", "A07192", "A07202", "A07212", "A07222", "A07232", "A07242", "A07252", "A07262", "A07272", "A07282", "A07292", "A07302", "A07312", "A07322", "A07332", "A07342", "A07352", "A07362", "A07372", "A08012", "A08022", "A08032", "A08042", "A08052", "A08062", "A08072", "A08082", "A08092", "A08102", "A08112", "A08122", "A08132", "A08142", "A08152", "A08162", "A08172", "A08182", "A08192", "A08202", "A08212", "A08222", "A08232", "A08242", "A08252", "A08262", "A08272", "A08282", "A08292", "A08302", "A08312", "A08322", "A08332", "A08342", "A08352", "A08362", "A09012", "A09022", "A09032", "A09042", "A09052", "A09062", "A09072", "A09082", "A09092", "A09102", "A09112", "A09122", "A09132", "A09142", "A09152", "A09162", "A09172", "A09182", "A09192", "A09202", "A09212", "A09222", "A09232", "A09242", "A09252", "A09262", "A09272", "A09282", "A09292", "A09302", "A09312", "A09322", "A09332", "A09342", "A09352", "A09362", "A10012", "A10022", "A10032", "A10042", "A10052", "A10062", "A10072", "A10082", "A10092", "A10102", "A10112", "A10122", "A10132", "A10142", "A10152", "A10162", "A10172", "A10182", "A10192", "A10202", "A10212", "A10222", "A10232", "A10242", "A10252", "A10262", "A10272", "A10282", "A11012", "A11022", "A11032", "A11042", "A11052", "A11062", "A11072", "A11082", "A11092", "A11102", "A11112", "A11122", "A11132", "A11142", "A11152", "A11162", "A11172", "A11182", "A11192", "A11202", "A11212", "A11222", "A11232", "A11242", "A11252", "A11262", "A11272", "A11282", "A12012", "A12022", "A12032", "A12042", "A12052", "A12062", "A12072", "A12082", "A12092", "A12102", "A12112", "A12122", "A12132", "A12142", "A12152", "A12162", "A12172", "A12182", "A12192", "A12202", "A12212", "A12222", "A12232", "A12242", "A12252", "A12262", "A12272", "A12282", "A12292", "A12302", "A12312", "A12322", "A12332", "A12342", "A12352", "A13012", "A13022", "A13032", "A13042", "A13052", "A13062", "A13072", "A13082", "A13092", "A13102", "A13112", "A13122", "A13132", "A13142", "A13152", "A13162", "A13172", "A13182", "A13192", "A13202", "A13212", "A13222", "A13232", "A13242", "A13252", "A13262", "A13272", "A13282", "A13292", "A13302", "A13312", "A13322", "A13332", "A13342", "A13352", "A14012", "A14022", "A14032", "A14042", "A14052", "A14062", "A14072", "A14082", "A14092", "A14102", "A14112", "A14122", "A14132", "A14142", "A14152", "A14162", "A14172", "A14182", "A14192", "A14202", "A14212", "A14222", "A14232", "A14242", "A14252", "A14262", "A14272", "A14282", "A14292", "A14302", "A14312", "A14322", "A14332", "A14342", "A14352", "A15012", "A15022", "A15032", "A15042", "A15052", "A15062", "A15072", "A15082", "A15092", "A15102", "A15112", "A15122", "A15132", "A15142", "A15152", "A15162", "A15172", "A15182", "A15192", "A15202", "A15212", "A15222", "A15232", "A15242", "A15252", "A15262", "A15272", "A15282", "A15292", "A15302", "A15312", "A15322", "A15332", "A15342", "A15352", "A16012", "A16022", "A16032", "A16042", "A16052", "A16062", "A16072", "A16082", "A16092", "A16102", "A16112", "A16122", "A16132", "A16142", "A16152", "A16162", "A16172", "A16182", "A16192", "A16202", "A16212", "A16222", "A16232", "A16242", "A16252", "A16262", "A16272", "A16282", "A16292", "A16302", "A16312", "A16322", "A16332", "A16342", "A16352", "A16362"];
-
-// Mapa fisico real del Sector B (planta 1), extraido del listado oficial:
-// pasillos 01-13, columnas y niveles variables por pasillo (estructura irregular).
-var SMAP_B=["B01010", "B01011", "B01012", "B01013", "B01020", "B01021", "B01022", "B01030", "B01031", "B01032", "B01040", "B01041", "B01042", "B01043", "B01050", "B01051", "B01052", "B01053", "B01060", "B01061", "B01062", "B01063", "B01070", "B01071", "B01072", "B01073", "B01080", "B01081", "B01082", "B01083", "B01090", "B01091", "B01092", "B01093", "B01100", "B01101", "B01102", "B01103", "B01104", "B01110", "B01111", "B01112", "B01113", "B01114", "B01120", "B01121", "B01122", "B01130", "B01131", "B01132", "B01140", "B01141", "B01142", "B01150", "B01151", "B01152", "B01160", "B01161", "B01170", "B01171", "B01180", "B01181", "B01182", "B01190", "B01191", "B01192", "B01200", "B01201", "B01210", "B01211", "B01220", "B01221", "B01222", "B01230", "B01231", "B01232", "B01240", "B01241", "B01242", "B01250", "B01251", "B01252", "B01260", "B01261", "B01262", "B01270", "B01271", "B01272", "B01280", "B01281", "B01282", "B01290", "B01291", "B01292", "B01300", "B01301", "B01302", "B01310", "B01311", "B01312", "B01320", "B01321", "B01322", "B01330", "B01331", "B01332", "B01340", "B01341", "B01342", "B01350", "B01351", "B01352", "B01360", "B01361", "B01362", "B01370", "B01371", "B01372", "B01380", "B01381", "B01382", "B01390", "B01391", "B01392", "B01400", "B01401", "B01402", "B01410", "B01411", "B01412", "B01420", "B01421", "B01422", "B01430", "B01431", "B01432", "B02010", "B02011", "B02012", "B02013", "B02020", "B02021", "B02022", "B02023", "B02030", "B02031", "B02032", "B02040", "B02041", "B02042", "B02050", "B02051", "B02052", "B02060", "B02061", "B02062", "B02070", "B02071", "B02072", "B02073", "B02080", "B02081", "B02082", "B02083", "B02090", "B02091", "B02092", "B02093", "B02100", "B02101", "B02102", "B02103", "B02110", "B02111", "B02112", "B02120", "B02121", "B02122", "B02130", "B02131", "B02132", "B02133", "B02140", "B02141", "B02142", "B02143", "B02150", "B02151", "B02152", "B02160", "B02161", "B02162", "B02170", "B02171", "B02180", "B02181", "B02190", "B02191", "B02192", "B02200", "B02201", "B02202", "B02210", "B02211", "B02212", "B02220", "B02221", "B02222", "B02230", "B02231", "B02240", "B02241", "B02250", "B02251", "B02252", "B02260", "B02261", "B02262", "B02270", "B02271", "B02272", "B02280", "B02281", "B02282", "B02290", "B02291", "B02300", "B02301", "B02310", "B02311", "B02320", "B02321", "B02330", "B02331", "B02332", "B02340", "B02341", "B02342", "B02350", "B02351", "B02360", "B02361", "B02370", "B02371", "B02372", "B02380", "B02381", "B02382", "B02390", "B02391", "B02392", "B02400", "B02401", "B02410", "B02411", "B02420", "B02421", "B03010", "B03011", "B03012", "B03013", "B03020", "B03021", "B03022", "B03023", "B03030", "B03031", "B03032", "B03040", "B03041", "B03042", "B03050", "B03051", "B03052", "B03060", "B03061", "B03062", "B03070", "B03071", "B03072", "B03073", "B03080", "B03081", "B03082", "B03083", "B03090", "B03091", "B03092", "B03093", "B03100", "B03101", "B03102", "B03103", "B03110", "B03111", "B03112", "B03120", "B03121", "B03122", "B03130", "B03131", "B03132", "B03133", "B03140", "B03141", "B03142", "B03143", "B03150", "B03151", "B03160", "B03161", "B03170", "B03171", "B03172", "B03180", "B03181", "B03182", "B03190", "B03191", "B03192", "B03200", "B03201", "B03202", "B03210", "B03211", "B03220", "B03221", "B03230", "B03231", "B03232", "B03240", "B03241", "B03242", "B03250", "B03251", "B03252", "B03260", "B03261", "B03262", "B03270", "B03271", "B03280", "B03281", "B03290", "B03291", "B03292", "B03300", "B03301", "B03302", "B03310", "B03311", "B03312", "B03320", "B03321", "B03322", "B03330", "B03331", "B03340", "B03341", "B03350", "B03351", "B03352", "B03360", "B03361", "B03362", "B03370", "B03371", "B03380", "B03381", "B03390", "B03391", "B03400", "B03401", "B04010", "B04011", "B04012", "B04013", "B04020", "B04021", "B04022", "B04023", "B04030", "B04031", "B04032", "B04033", "B04040", "B04041", "B04042", "B04043", "B04050", "B04051", "B04052", "B04060", "B04061", "B04062", "B04070", "B04071", "B04072", "B04073", "B04080", "B04081", "B04082", "B04083", "B04090", "B04091", "B04092", "B04093", "B04100", "B04101", "B04102", "B04103", "B04110", "B04111", "B04112", "B04120", "B04121", "B04122", "B04130", "B04131", "B04132", "B04133", "B04140", "B04141", "B04142", "B04143", "B04150", "B04151", "B04152", "B04160", "B04161", "B04162", "B04170", "B04171", "B04180", "B04181", "B04190", "B04191", "B04192", "B04200", "B04201", "B04202", "B04210", "B04211", "B04212", "B04220", "B04221", "B04222", "B04230", "B04231", "B04240", "B04241", "B04250", "B04251", "B04252", "B04260", "B04261", "B04262", "B04270", "B04271", "B04272", "B04280", "B04281", "B04282", "B04290", "B04291", "B04300", "B04301", "B04310", "B04311", "B04320", "B04321", "B04330", "B04331", "B04340", "B04341", "B04350", "B04351", "B04360", "B04361", "B04370", "B04371", "B04380", "B04381", "B04390", "B04391", "B04400", "B04401", "B05010", "B05011", "B05012", "B05013", "B05020", "B05021", "B05022", "B05023", "B05030", "B05031", "B05032", "B05033", "B05040", "B05041", "B05042", "B05043", "B05050", "B05051", "B05052", "B05060", "B05061", "B05062", "B05070", "B05071", "B05072", "B05073", "B05080", "B05081", "B05082", "B05083", "B05090", "B05091", "B05092", "B05093", "B05100", "B05101", "B05102", "B05103", "B05110", "B05111", "B05112", "B05120", "B05121", "B05122", "B05130", "B05131", "B05132", "B05140", "B05141", "B05142", "B05150", "B05151", "B05160", "B05161", "B05170", "B05171", "B05180", "B05181", "B05190", "B05191", "B05200", "B05201", "B05210", "B05211", "B05220", "B05221", "B05230", "B05231", "B05240", "B05241", "B05250", "B05251", "B05260", "B05261", "B05270", "B05271", "B05280", "B05281", "B05290", "B05291", "B05300", "B05301", "B05310", "B05311", "B05320", "B05321", "B05330", "B05331", "B05340", "B05341", "B05350", "B05351", "B05360", "B05361", "B05370", "B05371", "B05380", "B05381", "B06010", "B06011", "B06012", "B06020", "B06021", "B06022", "B06030", "B06031", "B06032", "B06040", "B06041", "B06042", "B06050", "B06051", "B06052", "B06053", "B06054", "B06055", "B06060", "B06061", "B06062", "B06070", "B06071", "B06072", "B06080", "B06081", "B06082", "B06090", "B06091", "B06092", "B06100", "B06101", "B06102", "B06110", "B06111", "B06112", "B06120", "B06121", "B06122", "B06130", "B06131", "B06132", "B06140", "B06141", "B06142", "B06150", "B06151", "B06152", "B06160", "B06161", "B06162", "B06170", "B06171", "B06172", "B06180", "B06181", "B06182", "B06190", "B06191", "B06192", "B06200", "B06201", "B06202", "B06210", "B06211", "B06212", "B06220", "B06221", "B06222", "B06230", "B06231", "B06232", "B06240", "B06241", "B06242", "B06250", "B06251", "B06252", "B06260", "B06261", "B06262", "B06270", "B06271", "B06272", "B06280", "B06281", "B06282", "B06290", "B06291", "B06292", "B06300", "B06301", "B06302", "B06310", "B06311", "B06312", "B06320", "B06321", "B06322", "B06330", "B06331", "B06332", "B07010", "B07011", "B07012", "B07020", "B07021", "B07022", "B07030", "B07031", "B07032", "B07040", "B07041", "B07042", "B07050", "B07051", "B07052", "B07053", "B07054", "B07055", "B07060", "B07061", "B07062", "B07070", "B07071", "B07072", "B07080", "B07081", "B07082", "B07090", "B07091", "B07092", "B07100", "B07101", "B07102", "B07110", "B07111", "B07112", "B07120", "B07121", "B07122", "B07130", "B07131", "B07132", "B07140", "B07141", "B07142", "B07150", "B07151", "B07152", "B07160", "B07161", "B07162", "B07170", "B07171", "B07172", "B07180", "B07181", "B07182", "B07190", "B07191", "B07192", "B07200", "B07201", "B07202", "B07210", "B07211", "B07212", "B07220", "B07221", "B07222", "B07230", "B07231", "B07232", "B07240", "B07241", "B07242", "B07250", "B07251", "B07252", "B07260", "B07261", "B07262", "B07270", "B07271", "B07272", "B07280", "B07281", "B07282", "B07290", "B07291", "B07292", "B07300", "B07301", "B07302", "B07310", "B07311", "B07312", "B07320", "B07321", "B07322", "B07330", "B07331", "B07332", "B08010", "B08011", "B08012", "B08020", "B08021", "B08022", "B08030", "B08031", "B08032", "B08040", "B08041", "B08042", "B08050", "B08051", "B08060", "B08061", "B08070", "B08071", "B08072", "B08080", "B08081", "B08082", "B08090", "B08091", "B08092", "B08100", "B08101", "B08102", "B08110", "B08111", "B08120", "B08121", "B08130", "B08131", "B08140", "B08141", "B08150", "B08151", "B08160", "B08161", "B08170", "B08171", "B08180", "B08181", "B08190", "B08191", "B08192", "B08200", "B08201", "B08202", "B08210", "B08211", "B08212", "B08220", "B08221", "B08222", "B08230", "B08231", "B08240", "B08241", "B08250", "B08251", "B08252", "B08260", "B08261", "B08262", "B08270", "B08271", "B08272", "B08280", "B08281", "B08282", "B08290", "B08291", "B08300", "B08301", "B08310", "B08311", "B08312", "B08320", "B08321", "B08322", "B08330", "B08331", "B08332", "B08340", "B08341", "B08342", "B08350", "B08351", "B08352", "B08360", "B08361", "B08362", "B08370", "B08371", "B08372", "B08380", "B08381", "B08382", "B08390", "B08391", "B08392", "B08400", "B08401", "B08402", "B08410", "B08411", "B08420", "B08421", "B09010", "B09011", "B09012", "B09020", "B09021", "B09022", "B09030", "B09031", "B09032", "B09040", "B09041", "B09042", "B09050", "B09051", "B09060", "B09061", "B09070", "B09071", "B09072", "B09080", "B09081", "B09082", "B09090", "B09091", "B09092", "B09100", "B09101", "B09102", "B09110", "B09111", "B09120", "B09121", "B09130", "B09131", "B09140", "B09141", "B09150", "B09151", "B09160", "B09161", "B09170", "B09171", "B09180", "B09181", "B09190", "B09191", "B09192", "B09200", "B09201", "B09202", "B09210", "B09211", "B09212", "B09220", "B09221", "B09222", "B09230", "B09231", "B09240", "B09241", "B09250", "B09251", "B09252", "B09260", "B09261", "B09262", "B09270", "B09271", "B09272", "B09280", "B09281", "B09282", "B09290", "B09291", "B09300", "B09301", "B10010", "B10011", "B10020", "B10021", "B10030", "B10031", "B10032", "B10040", "B10041", "B10042", "B10050", "B10051", "B10052", "B10060", "B10061", "B10062", "B10070", "B10071", "B10080", "B10081", "B10090", "B10091", "B10100", "B10101", "B10110", "B10111", "B10120", "B10121", "B10130", "B10131", "B10132", "B10140", "B10141", "B10142", "B10150", "B10151", "B10152", "B10160", "B10161", "B10162", "B10170", "B10171", "B10172", "B10180", "B10181", "B10182", "B10190", "B10191", "B10192", "B10200", "B10201", "B10202", "B10210", "B10211", "B10212", "B10220", "B10221", "B10222", "B10230", "B10231", "B10232", "B10240", "B10241", "B10242", "B10250", "B10251", "B10252", "B10260", "B10261", "B10262", "B11010", "B11011", "B11012", "B11020", "B11021", "B11022", "B11030", "B11031", "B11032", "B11040", "B11041", "B11042", "B11050", "B11051", "B11052", "B11060", "B11061", "B11062", "B11070", "B11071", "B11072", "B11080", "B11081", "B11082", "B11090", "B11091", "B11100", "B11101", "B11110", "B11111", "B11120", "B11121", "B11130", "B11131", "B11132", "B11140", "B11141", "B11142", "B11150", "B11151", "B11152", "B11160", "B11161", "B11162", "B11170", "B11171", "B11172", "B11180", "B11181", "B11182", "B11190", "B11191", "B11192", "B11200", "B11201", "B11202", "B11210", "B11211", "B11212", "B11220", "B11221", "B11222", "B11230", "B11231", "B11232", "B11240", "B11241", "B11242", "B11250", "B11251", "B11252", "B11260", "B11261", "B11262", "B12010", "B12011", "B12020", "B12021", "B12030", "B12031", "B12040", "B12041", "B12050", "B12051", "B12060", "B12061", "B12070", "B12071", "B12080", "B12081", "B12090", "B12091", "B12092", "B12100", "B12101", "B12102", "B12110", "B12111", "B12112", "B12120", "B12121", "B12122", "B12130", "B12131", "B12132", "B12140", "B12141", "B12142", "B12150", "B12151", "B12152", "B12160", "B12161", "B12162", "B12170", "B12171", "B12172", "B12180", "B12181", "B12182", "B12190", "B12191", "B12192", "B12200", "B12201", "B12202", "B12210", "B12211", "B12212", "B12220", "B12221", "B12222", "B12230", "B12231", "B12232", "B12233", "B12234", "B12240", "B12241", "B12242", "B12243", "B13010", "B13011", "B13020", "B13021", "B13022", "B13030", "B13031", "B13032", "B13040", "B13041", "B13042", "B13050", "B13051", "B13052", "B13060", "B13061", "B13062", "B13070", "B13071", "B13072", "B13080", "B13081", "B13082"];
-
-var SECTOR_LABELS={A:'Sector A', B:'Sector B'};
-var currentSector='A';
-var OCCUPIED_KEY='almacenA_occ_v1';
-var SOB_OCCUPIED_KEY='almacenA_sob_v1';
-var manualSobOccupied={};
-var manualOccupied={};
-
-function loadOccupied(){
-  try{
-    var arr=JSON.parse(localStorage.getItem(OCCUPIED_KEY)||'[]');
-    for(var i=0;i<arr.length;i++) manualOccupied[arr[i]]=true;
-  }catch(e){}
+const D=JSON.parse(document.getElementById('ot-datos').textContent);
+const KEY='otpick_'+D.id;
+let S=null,tab='pick',open=null,msgT=null;
+const $=s=>document.querySelector(s);
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const norm=s=>String(s||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
+const akey=(st,code,box,j)=>st+'|'+code+'|'+box+'|'+j;
+function loadState(){
+  let e=null;try{e=JSON.parse(document.getElementById('ot-estado').textContent)}catch(x){}
+  let l=null;try{l=JSON.parse(localStorage.getItem(KEY))}catch(x){}
+  const pick=(e&&l)?((l.t||0)>(e.t||0)?l:e):(e||l);
+  S=pick&&pick.v===1?pick:{v:1,t:0,oper:'',ini:null,fin:null,picks:{},skip:{},locOk:{},cajaOk:{},eanOk:{},carro:false,log:[]};
 }
-
-function saveOccupied(){
-  try{localStorage.setItem(OCCUPIED_KEY,JSON.stringify(Object.keys(manualOccupied)));}catch(e){}
-}
-
-function markOccupied(u){
-  manualOccupied[u]=true;
-  saveOccupied();
-  renderVacias();
-  renderStats();
-  showToast(u+' marcada como ocupada');
-}
-
-function unmarkOccupied(u){
-  delete manualOccupied[u];
-  saveOccupied();
-  renderVacias();
-  renderStats();
-  showToast(u+' devuelta a vacias');
-}
-
-function loadSobOccupied(){
-  try{var a=JSON.parse(localStorage.getItem(SOB_OCCUPIED_KEY)||'[]');for(var i=0;i<a.length;i++)manualSobOccupied[a[i]]=true;}catch(e){}
-}
-function saveSobOccupied(){
-  try{localStorage.setItem(SOB_OCCUPIED_KEY,JSON.stringify(Object.keys(manualSobOccupied)));}catch(e){}
-}
-function markSobOccupied(u){
-  manualSobOccupied[u]=true;
-  saveSobOccupied();
-  renderSobrestock();
-  showToast(u+' marcada como ocupada');
-}
-function unmarkSobOccupied(u){
-  delete manualSobOccupied[u];
-  saveSobOccupied();
-  renderSobrestock();
-  showToast(u+' devuelta a libres');
-}
-
-function syncOccupiedWithCSV(){
-  var vaciaSet={};
-  for(var s in V){ for(var i=0;i<V[s].length;i++) vaciaSet[V[s][i][0]]=true; }
-  var changed=false;
-  for(var u in manualOccupied){
-    if(!vaciaSet[u]){delete manualOccupied[u];changed=true;}
-  }
-  if(changed) saveOccupied();
-}
-
-function subscribeRealtime(){}
-function showToast(msg){var t=document.getElementById('toast');t.textContent=msg;t.className='toast show';setTimeout(function(){t.className='toast';},2200);}
-function pad2(n){return n<10?'0'+n:String(n);}
-
-// ---- CSV FETCH ----
-var CSV_URL='Almacen_A.csv';
-
-function fetchCSV(){
-  showLoading('Cargando datos...','Descargando CSV del almacen');
-  fetch(CSV_URL+'?v='+Date.now())
-    .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.text();})
-    .then(function(txt){
-      showLoading('Procesando...','Analizando '+txt.split('\n').length+' registros');
-      setTimeout(function(){
-        var result=parseCSV(txt);
-        D=result.d; V=result.v;
-        updateHeader(D.length);
-        syncOccupiedWithCSV();
-        renderAll();
-        hideLoading();
-        // Parse sobrestock in background after UI is ready
-        setTimeout(function(){
-          occupiedSobrestock=parseSobrestockFromCSV(txt);
-        buildLocationIndex(txt);
-        }, 100);
-      }, 50);
-    })
-    .catch(function(err){
-      hideLoading();
-      showError('No se pudo cargar Almacen_A.csv<br>'+err.message);
-    });
-}
-
-function showError(msg){
-  var h='<div class="err-banner"><b>Error al cargar datos</b>'+msg+'</div>';
-  document.getElementById('lV').innerHTML=h;
-  document.getElementById('lR').innerHTML=h;
-  document.getElementById('hsub').textContent='Error al cargar datos';
-}
-
-// ---- CSV PARSER (separador ; decimales con coma) ----
-function parseCSVLine(line, sep){
-  var result=[], cur='', inQ=false;
-  for(var i=0;i<line.length;i++){
-    var c=line[i];
-    if(c==='"'){if(inQ&&line[i+1]==='"'){cur+='"';i++;}else{inQ=!inQ;}}
-    else if(c===sep&&!inQ){result.push(cur.trim());cur='';}
-    else cur+=c;
-  }
-  result.push(cur.trim());
-  return result;
-}
-
-function splitCSVRows(txt){
-  // Split CSV respecting quoted fields that may contain newlines
-  var rows=[], cur='', inQ=false;
-  for(var i=0;i<txt.length;i++){
-    var c=txt[i];
-    if(c==='"') inQ=!inQ;
-    else if((c==='\n')&&!inQ){rows.push(cur);cur='';continue;}
-    cur+=c;
-  }
-  if(cur) rows.push(cur);
-  return rows;
-}
-
-function toFloat(s){return parseFloat(String(s||'0').replace(',','.').replace(/[^0-9.\-]/g,''))||0;}
-function toInt(s){return parseInt(String(s||'0').replace(',','.'))||0;}
-
-function parseCSV(txt){
-  var lines=splitCSVRows(txt);
-  var headers=parseCSVLine(lines[0],';');
-
-  // find column indexes by name
-  function idx(name){for(var i=0;i<headers.length;i++)if(headers[i].trim()===name)return i;return -1;}
-  var iCod=idx('Codigo'), iDesc=idx('Descripcion'), iUbi=idx('UbicacionCodigo');
-  var iRotM=idx('UDS_1Mes'), iRotT=idx('UDS_3Meses');
-  var iVol=idx('Volumen'), iPeso=idx('Peso'), iEx=idx('Existencias'), iCat=idx('Catalogo');
-
-  var data=[], occupiedA={}, occupiedB={};
-  for(var i=1;i<lines.length;i++){
-    var line=lines[i].trim();
-    if(!line) continue;
-    var f=parseCSVLine(line,';');
-    var ubi=f[iUbi]||'';
-    if(!ubi.trim()) continue;
-    var parsed=parseUbi(ubi);
-    var isPicking=0, zona=null;
-    if(parsed){
-      if(parsed.sector==='A'){
-        zona=parsed.p<=5?'P':'G';
-        if(parsed.p>=1&&parsed.p<=5&&(parsed.n===0||parsed.n===1)) isPicking=1;
-        if(parsed.p>=6&&parsed.p<=16&&parsed.n===0) isPicking=1;
-        if(isPicking) occupiedA[parsed.p+','+parsed.c+','+parsed.n]=true;
-      } else if(parsed.sector==='B'){
-        // Sector B: sin distincion de zonas, toda ubicacion valida es picking
-        zona='B';
-        isPicking=1;
-        occupiedB[ubi]=true;
-      }
-    }
-    data.push([
-      f[iCod]||'',
-      (f[iDesc]||'').substring(0,55),
-      ubi,
-      parsed?parsed.p:null,
-      parsed?parsed.c:null,
-      parsed?parsed.n:null,
-      isPicking, zona,
-      toInt(f[iRotM]), toInt(f[iRotT]),
-      toFloat(f[iVol]), toFloat(f[iPeso]),
-      toInt(f[iEx]),
-      f[iCat]||'',
-      parsed?parsed.sector:null
-    ]);
-  }
-  return {d:data, v:{A:buildVaciasA(occupiedA), B:buildVaciasB(occupiedB)}};
-}
-
-function parseUbi(ubi){
-  if(!ubi) return null;
-  var sector=ubi.charAt(0);
-  if((sector!=='A'&&sector!=='B')||ubi==='ALTILLOES'||ubi.startsWith('AA')||ubi.startsWith('BB')) return null;
-  try{
-    var p=parseInt(ubi.substring(1,3),10);
-    var c=parseInt(ubi.substring(3,5),10);
-    var n=ubi.length>5?parseInt(ubi[5],10):0;
-    if(isNaN(p)||isNaN(c)||isNaN(n)) return null;
-    return {sector:sector,p:p,c:c,n:n};
-  }catch(e){return null;}
-}
-
-var RESTRICTED={
-  // Estructurales (pilares/pasos)
-  'A06070':1,'A06071':1,'A06072':1,
-  'A06140':1,'A06141':1,'A06142':1,
-  'A06210':1,'A06211':1,'A06212':1,
-  'A06280':1,'A06281':1,'A06282':1,
-  'A06350':1,'A06351':1,'A06352':1,
-  'A11130':1,'A11131':1,'A11132':1,
-  'A11200':1,'A11201':1,'A11202':1,
-  'A11270':1,'A11271':1,'A11272':1,
-  // Sobrestock pasillo 05 (no picking)
-  'A05201':1,'A05211':1,'A05231':1,
-  'A05241':1,'A05251':1,'A05261':1,
-  'A05271':1,'A05281':1,'A05301':1,
-  'A05311':1,'A05321':1
-};
-
-// Rango real de columnas por pasillo del Sector A, derivado de SMAP_A (mapa fisico
-// verdadero, usado tambien para el sobrestock). No se puede inferir el rango a partir
-// de las ubicaciones actualmente ocupadas: si una columna entera (p.ej. la ultima de un
-// pasillo) no tiene ahora mismo ningun articulo asignado, nunca aparece en los datos del
-// CSV y quedaria fuera del bucle, con lo que esas ubicaciones vacias de verdad nunca se
-// generarian ni se marcarian como tal.
-var _pasilloRangeACache=null;
-function getPasilloRangeA(){
-  if(_pasilloRangeACache) return _pasilloRangeACache;
-  var range={};
-  for(var i=0;i<SMAP_A.length;i++){
-    var u=SMAP_A[i];
-    var pp=parseInt(u.substring(1,3),10), cc=parseInt(u.substring(3,5),10);
-    if(isNaN(pp)||isNaN(cc)) continue;
-    if(!range[pp]) range[pp]={min:cc,max:cc};
-    else{ if(cc<range[pp].min) range[pp].min=cc; if(cc>range[pp].max) range[pp].max=cc; }
-  }
-  _pasilloRangeACache=range;
-  return range;
-}
-
-function buildVaciasA(occupied){
-  var byP={};
-  for(var key in occupied){
-    var pts=key.split(','), pp=parseInt(pts[0]), cc=parseInt(pts[1]), nn=parseInt(pts[2]);
-    if(!byP[pp]) byP[pp]={};
-    byP[pp][cc+','+nn]=true;
-  }
-  var vacias=[];
-  var range=getPasilloRangeA();
-  var ps=Object.keys(range).map(Number).sort(function(a,b){return a-b;});
-  for(var pi=0;pi<ps.length;pi++){
-    var pp=ps[pi];
-    var occ=byP[pp]||{};
-    var minC=range[pp].min, maxC=range[pp].max, z=pp<=5?'P':'G';
-    for(var cc=minC;cc<=maxC;cc++){
-      if(pp>=1&&pp<=5){for(var nn=0;nn<=1;nn++){var u='A'+pad2(pp)+pad2(cc)+nn;if(!occ[cc+','+nn]&&!RESTRICTED[u])vacias.push([u,pp,z]);}}
-      else{var u='A'+pad2(pp)+pad2(cc)+'0';if(!occ[cc+',0']&&!RESTRICTED[u])vacias.push([u,pp,z]);}
-    }
-  }
-  return vacias;
-}
-
-// Sector B: usa el mapa fisico real (SMAP_B) en vez de una heuristica de huecos,
-// porque el numero de columnas y niveles varia de forma irregular por pasillo.
-function buildVaciasB(occupiedSet){
-  var vacias=[];
-  for(var i=0;i<SMAP_B.length;i++){
-    var u=SMAP_B[i];
-    if(!occupiedSet[u]){
-      var p=parseInt(u.substring(1,3));
-      vacias.push([u,p,'B']);
-    }
-  }
-  return vacias;
-}
-
-// ---- UI ----
-function sw(t){
-  var ids=['pv','pr','pb','ps','pc'];
-  for(var i=0;i<5;i++){
-    document.getElementById(ids[i]).className='panel'+(i===t?' on':'');
-    document.querySelectorAll('.tab')[i].className='tab'+(i===t?' on':'');
-  }
-  document.getElementById('secTog').style.display=(t===0||t===1)?'flex':'none';
-  if(t===3) renderSobrestock();
-  if(t===4){var si=document.getElementById('siSob');if(si)setTimeout(function(){si.focus();},50);}
-}
-function updateHeader(n){
-  var now=new Date().toLocaleString('es-ES',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
-  document.getElementById('hsub').textContent=n+' referencias \u00b7 '+now;
-}
-
-function renderSectorToggle(){
-  var h='';
-  for(var s in SECTOR_LABELS){
-    h+='<div class="fp'+(s===currentSector?' on':'')+'" onclick="setSector(\''+s+'\')">'+SECTOR_LABELS[s]+'</div>';
-  }
-  document.getElementById('secTog').innerHTML=h;
-}
-function setSector(s){
-  if(s===currentSector) return;
-  currentSector=s;
-  vacPas=0; rotPas=0;
-  renderSectorToggle();
-  renderStats();
-  renderVacFilter();
-  renderVacias();
-  renderRotFilter();
-  renderRot();
-}
-
-function renderAll(){
-  renderSectorToggle();
-  renderStats();
-  renderVacFilter();
-  renderVacias();
-  renderRotFilter();
-  renderRot();
-  document.getElementById('vacLbl').style.display='block';
-  document.getElementById('rotLbl').style.display='block';
-}
-
-function renderStats(){
-  if(!D.length){document.getElementById('sRow').innerHTML='';return;}
-  var Dsec=D.filter(function(r){return r[14]===currentSector;});
-  var Vsec=V[currentSector]||[];
-  var occ=new Set(Dsec.map(function(r){return r[2];})).size;
-  var manCount=0;
-  for(var u in manualOccupied){ if(u.charAt(0)===currentSector) manCount++; }
-  var realVacias=Vsec.filter(function(v){return !manualOccupied[v[0]];}).length;
-  var tot=occ+Vsec.length;
-  var pct=tot?Math.round((occ+manCount)/tot*1000)/10:0;
-  document.getElementById('sRow').innerHTML=
-    '<div class="sc"><div class="sv" style="color:#c0392b">'+realVacias+'</div><div class="sl">Vacias</div></div>'+
-    '<div class="sc"><div class="sv">'+occ+'</div><div class="sl">Ocupadas</div></div>'+
-    '<div class="sc"><div class="sv" style="color:#27ae60">'+pct+'%</div><div class="sl">Ocupacion</div></div>';
-}
-
-function renderVacFilter(){
-  var Vsec=V[currentSector]||[];
-  if(!Vsec.length){document.getElementById('vFil').innerHTML='';return;}
-  var ps=[0];
-  for(var i=0;i<Vsec.length;i++){if(!manualOccupied[Vsec[i][0]]&&ps.indexOf(Vsec[i][1])<0)ps.push(Vsec[i][1]);}
-  ps.sort(function(a,b){return a-b;});
-  var h='';
-  for(var i=0;i<ps.length;i++){var p=ps[i];h+='<div class="fp'+(p===vacPas?' on':'')+'" onclick="setVP('+p+')">'+(p===0?'Todos':'P'+pad2(p))+'</div>';}
-  document.getElementById('vFil').innerHTML=h;
-}
-function setVP(p){vacPas=p;renderVacFilter();renderVacias();}
-
-function renderVacias(){
-  var Vsec=V[currentSector]||[];
-  var open=Vsec.filter(function(v){return !manualOccupied[v[0]]&&!RESTRICTED[v[0]]&&(!vacPas||v[1]===vacPas);});
-  var closed=Vsec.filter(function(v){return manualOccupied[v[0]]&&(!vacPas||v[1]===vacPas);});
-  var el=document.getElementById('lV');
-  if(!open.length){
-    el.innerHTML='<div class="empty">No quedan ubicaciones vacias'+(vacPas?' en P'+pad2(vacPas):'')+' en '+SECTOR_LABELS[currentSector]+' &#127881;</div>';
-  } else {
-    var h='<div class="card">';
-    for(var i=0;i<open.length;i++){
-      var v=open[i];
-      h+='<div class="row"><div style="flex:1"><div class="ubi-big">'+v[0]+'</div>'+
-         '<div class="rmeta">P'+pad2(v[1])+(v[2]==='P'?' &middot; Pequeno':v[2]==='G'?' &middot; Grande':'')+'</div></div>'+
-         '<button class="btn-occ" onclick="markOccupied(\''+v[0]+'\')">&#10003; Ocupar</button></div>';
-    }
-    el.innerHTML=h+'</div>';
-  }
-  var secEl=document.getElementById('secOcc');
-  if(!closed.length){secEl.style.display='none';return;}
-  secEl.style.display='block';
-  var h2='<div class="card">';
-  for(var i=0;i<closed.length;i++){
-    var v=closed[i];
-    h2+='<div class="row row-occ"><div style="flex:1"><div class="ubi-big" style="color:#27ae60;font-size:16px">'+v[0]+'</div>'+
-        '<div class="rmeta">P'+pad2(v[1])+(v[2]==='P'?' &middot; Pequeno':v[2]==='G'?' &middot; Grande':'')+'</div></div>'+
-        '<span class="badge bg" style="margin-right:6px">Ocupada</span>'+
-        '<button class="btn-undo" onclick="unmarkOccupied(\''+v[0]+'\')">Deshacer</button></div>';
-  }
-  document.getElementById('lOcc').innerHTML=h2+'</div>';
-}
-
-function renderRotFilter(){
-  if(!D.length){document.getElementById('rFil').innerHTML='';return;}
-  var pset=[];
-  for(var i=0;i<D.length;i++){if(D[i][14]===currentSector&&D[i][6]===1&&pset.indexOf(D[i][3])<0)pset.push(D[i][3]);}
-  pset.sort(function(a,b){return a-b;});
-  var h='<div class="fp'+(rotPas===0?' on':'')+'" onclick="setRP(0)">Todos</div>';
-  for(var i=0;i<pset.length;i++){var p=pset[i];h+='<div class="fp'+(p===rotPas?' on':'')+'" onclick="setRP('+p+')">P'+pad2(p)+'</div>';}
-  document.getElementById('rFil').innerHTML=h;
-}
-function setRP(p){rotPas=p;renderRotFilter();renderRot();}
-function setRot(m){
-  rotMode=m;
-  document.getElementById('chM').className='chip'+(m===0?' on':'');
-  document.getElementById('chT').className='chip'+(m===1?' on':'');
-  renderRot();
-}
-function renderRot(){
-  if(!D.length){document.getElementById('lR').innerHTML='<div class="empty">Sin datos</div>';return;}
-  var list=D.filter(function(r){return r[6]===1&&r[14]===currentSector;});
-  if(rotPas) list=list.filter(function(r){return r[3]===rotPas;});
-  list=list.slice().sort(function(a,b){return rotMode===0?b[8]-a[8]:b[9]-a[9];}).slice(0,40);
-  var maxR=list.length?(rotMode===0?list[0][8]:list[0][9]):1;
-  if(!maxR) maxR=1;
-  var el=document.getElementById('lR');
-  if(!list.length){el.innerHTML='<div class="empty">Sin datos en '+SECTOR_LABELS[currentSector]+'</div>';return;}
-  var h='<div class="card">';
-  for(var i=0;i<list.length;i++){
-    var r=list[i], rot=rotMode===0?r[8]:r[9], pct=Math.round(rot/maxR*100);
-    var clr=pct>66?'#e94560':pct>33?'#e67e22':'#27ae60';
-    h+='<div class="row" onclick="openDetail('+D.indexOf(r)+')" style="cursor:pointer"><span class="rank">'+(i+1)+'</span>'+
-       '<div style="flex:1;min-width:0;padding:0 8px">'+
-         '<div style="display:flex;align-items:center;gap:6px"><span class="rref">'+r[0]+'</span>'+
-         '<span class="badge bp" style="font-size:9px">P'+pad2(r[3])+'</span></div>'+
-         '<div class="rdesc">'+r[1]+'</div>'+
-         '<div style="margin-top:4px"><div class="rot-bg"><div class="rot-fill" style="width:'+pct+'%;background:'+clr+'"></div></div></div>'+
-       '</div>'+
-       '<div style="text-align:right;min-width:40px">'+
-         '<div style="font-size:14px;font-weight:700;color:#1a1a2e">'+rot+'</div>'+
-         '<div style="font-size:9px;color:#aaa">'+(rotMode===0?'/mes':'/trim')+'</div>'+
-       '</div></div>';
-  }
-  el.innerHTML=h+'</div>';
-}
-
-function doSearch(q){
-  var el=document.getElementById('lB');
-  if(!D.length){el.innerHTML='<div class="empty">Sin datos cargados</div>';return;}
-  if(!q||q.length<2){el.innerHTML='<div class="empty">Escribe para buscar</div>';return;}
-  var ql=q.toLowerCase(), res=[];
-  for(var i=0;i<D.length&&res.length<25;i++){
-    var r=D[i];
-    if(r[6]!==1) continue;
-    if(r[0].toLowerCase().indexOf(ql)>=0||r[1].toLowerCase().indexOf(ql)>=0||r[2].toLowerCase().indexOf(ql)>=0) res.push(r);
-  }
-  if(!res.length){el.innerHTML='<div class="empty">Sin resultados para "'+q+'"</div>';return;}
-  var h='<div class="card">';
-  for(var i=0;i<res.length;i++){
-    var r=res[i];
-    h+='<div class="row"><div style="flex:1;min-width:0">'+
-       '<div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap"><span class="rref">'+r[0]+'</span>'+
-       (r[6]?'<span class="badge bg" style="font-size:9px">Picking</span>':'')+
-       '<span class="badge bs" style="font-size:9px">Sector '+(r[14]||'?')+'</span>'+
-       '<span class="badge bp" style="font-size:9px">'+r[2]+'</span></div>'+
-       '<div class="rdesc">'+r[1]+'</div>'+
-       '<div class="rmeta">Rot/mes: '+r[8]+' &middot; Exist: '+r[12]+(r[7]==='P'?' &middot; pequeno':r[7]==='G'?' &middot; grande':'')+'</div>'+
-       '</div></div>';
-  }
-  el.innerHTML=h+'</div>';
-}
-
-// ---- DETAIL MODAL ----
-function openDetail(idx){
-  var r=D[idx];
-  document.getElementById('dRef').textContent=r[0];
-  document.getElementById('dDesc').textContent=r[1];
-  document.getElementById('dUbi').textContent=r[2]||'Sin ubicacion';
-  document.getElementById('dPas').textContent=r[3]?'Pasillo '+pad2(r[3]):'—';
-  document.getElementById('dZona').textContent=r[7]==='P'?'Pequeno (P01-P05)':r[7]==='G'?'Grande (P06-P16)':r[7]==='B'?'Sector B':'—';
-  document.getElementById('dRotM').textContent=r[8]+' uds/mes';
-  document.getElementById('dRotT').textContent=r[9]+' uds/trimestre';
-  document.getElementById('dEx').textContent=r[12]+' uds';
-  document.getElementById('detailModal').className='overlay on';
-}
-function closeDetail(e){if(e.target===document.getElementById('detailModal'))document.getElementById('detailModal').className='overlay';}
-
-// ---- SOBRESTOCK ----
-var sobPasFilter=0;
-
-function parseSobrestockFromCSV(txt){
-  var occupied=new Set();
-  var usedAsPicking=new Set();
-  var lines=splitCSVRows(txt);
-  var headers=parseCSVLine(lines[0],';');
-  var iAlt1=headers.indexOf('UbicacionCodigoAlt1');
-  var iAlt2=headers.indexOf('UbicacionCodigoAlt2');
-  var iUbi=headers.indexOf('UbicacionCodigo');
-
-  for(var i=1;i<lines.length;i++){
-    var line=lines[i];
-    if(!line) continue;
-    var f=line.split(';');
-
-    // Collect all UbicacionCodigo as picking (excludes from sobrestock)
-    if(iUbi>=0&&iUbi<f.length){
-      var u=f[iUbi].trim();
-      if(u) usedAsPicking.add(u);
-    }
-
-    // Collect occupied sobrestock from Alt1/Alt2
-    var alts=[];
-    if(iAlt1>=0&&iAlt1<f.length) alts.push(f[iAlt1]);
-    if(iAlt2>=0&&iAlt2<f.length) alts.push(f[iAlt2]);
-    for(var j=0;j<alts.length;j++){
-      var s=alts[j];
-      for(var k=0;k<s.length-5;k++){
-        if(s[k]==='A'){
-          var raw=s.substring(k,k+9).split(' ').join('').split('\n').join('').split('\r').join('');
-          if(raw.length>=6&&raw[0]==='A'&&
-             raw[1]>='0'&&raw[1]<='9'&&raw[2]>='0'&&raw[2]<='9'&&
-             raw[3]>='0'&&raw[3]<='9'&&raw[4]>='0'&&raw[4]<='9'&&
-             raw[5]>='0'&&raw[5]<='9'){
-            occupied.add(raw.substring(0,6));
-          }
-        }
-      }
-    }
-  }
-
-  // Remove from SMAP_A any location used as picking
-  // Store usedAsPicking globally so renderSobrestock can filter
-  window._pickingUbis=usedAsPicking;
-  return occupied;
-}
-
-
-var occupiedSobrestock=new Set();
-
-function renderSobrestockFilter(){
-  var ps=[0];
-  var pickingUbis=window._pickingUbis||new Set();
-  var free=SMAP_A.filter(function(u){return !occupiedSobrestock.has(u)&&!pickingUbis.has(u)&&!manualSobOccupied[u];});
-  var manualMarked=SMAP_A.filter(function(u){return manualSobOccupied[u];});
-  for(var i=0;i<free.length;i++){
-    var p=parseInt(free[i].substring(1,3));
-    if(ps.indexOf(p)<0) ps.push(p);
-  }
-  ps.sort(function(a,b){return a-b;});
-  var h='';
-  for(var i=0;i<ps.length;i++){
-    var p=ps[i];
-    h+='<div class="fp'+(p===sobPasFilter?' on':'')+'" onclick="setSP('+p+')">'+(p===0?'Todos':'P'+pad2(p))+'</div>';
-  }
-  document.getElementById('sFil').innerHTML=h;
-}
-function setSP(p){sobPasFilter=p;renderSobrestockFilter();renderSobrestock();}
-
-function renderSobrestock(){
-  if(!D.length){document.getElementById('lS').innerHTML='<div class="empty">Carga el CSV primero</div>';return;}
-  var pickingUbis=window._pickingUbis||new Set();
-  var free=SMAP_A.filter(function(u){return !occupiedSobrestock.has(u)&&!pickingUbis.has(u)&&!manualSobOccupied[u];});
-  var manualMarked=SMAP_A.filter(function(u){return manualSobOccupied[u];});
-  var total=SMAP_A.length;
-  var occ=total-free.length;
-  var pct=total?Math.round(occ/total*1000)/10:0;
-
-  document.getElementById('sRow2').innerHTML=
-    '<div class="sc"><div class="sv" style="color:#27ae60">'+free.length+'</div><div class="sl">Libres</div></div>'+
-    '<div class="sc"><div class="sv">'+occ+'</div><div class="sl">Ocupadas</div></div>'+
-    '<div class="sc"><div class="sv" style="color:#e94560">'+pct+'%</div><div class="sl">Ocupacion</div></div>';
-
-  document.getElementById('sLbl').style.display='block';
-  renderSobrestockFilter();
-
-  var filtered=sobPasFilter?free.filter(function(u){return parseInt(u.substring(1,3))===sobPasFilter;}):free;
-  var el=document.getElementById('lS');
-
-  if(!filtered.length){
-    el.innerHTML='<div class="empty">No hay ubicaciones libres'+(sobPasFilter?' en P'+pad2(sobPasFilter):'')+' &#127881;</div>';
-  } else {
-    var rows='';
-    for(var i=0;i<filtered.length;i++){
-      var u=filtered[i];
-      var p=parseInt(u.substring(1,3));
-      var n=parseInt(u[5]);
-      rows+='<div class="row"><div style="flex:1"><div class="ubi-big">'+u+'</div>'+
-            '<div class="rmeta">P'+pad2(p)+' &middot; Nivel '+n+'</div></div>'+
-            '<button class="btn-occ" id="sob_'+u+'">&#10003; Ocupar</button></div>';
-    }
-    el.innerHTML='<div class="card">'+rows+'</div>';
-    for(var i=0;i<filtered.length;i++){
-      (function(ubi){
-        var btn=document.getElementById('sob_'+ubi);
-        if(btn) btn.onclick=function(){markSobOccupied(ubi);};
-      })(filtered[i]);
-    }
-  }
-
-  var secEl=document.getElementById('secSobOcc');
-  var filteredMarked=sobPasFilter?manualMarked.filter(function(u){return parseInt(u.substring(1,3))===sobPasFilter;}):manualMarked;
-  if(!filteredMarked.length){secEl.style.display='none';return;}
-  secEl.style.display='block';
-  var rows2='';
-  for(var i=0;i<filteredMarked.length;i++){
-    var u=filteredMarked[i];
-    var p=parseInt(u.substring(1,3));
-    var n=parseInt(u[5]);
-    rows2+='<div class="row row-occ"><div style="flex:1"><div class="ubi-big" style="color:#27ae60;font-size:16px">'+u+'</div>'+
-           '<div class="rmeta">P'+pad2(p)+' &middot; Nivel '+n+'</div></div>'+
-           '<span class="badge bg" style="margin-right:6px">Ocupada</span>'+
-           '<button class="btn-undo" id="unsob_'+u+'">Deshacer</button></div>';
-  }
-  document.getElementById('lSobOcc').innerHTML='<div class="card">'+rows2+'</div>';
-  for(var i=0;i<filteredMarked.length;i++){
-    (function(ubi){
-      var btn=document.getElementById('unsob_'+ubi);
-      if(btn) btn.onclick=function(){unmarkSobOccupied(ubi);};
-    })(filteredMarked[i]);
-  }
-}
-
-
-// ---- CONSULTA POR UBICACION (PDA) - Sector A y Sector B ----
-// locIndex[UBICACION] = { picking:[{c,d,ex,rm,rt}], sobrestock:[{c,d,u}] }
-var locIndex={};
-
-function normUbi(s){return String(s||'').toUpperCase().replace(/[^A-Z0-9]/g,'');}
-
-function ubiSector(ubi){
-  var c=ubi.charAt(0);
-  return (c>='A'&&c<='Z')?c:'?';
-}
-
-function buildLocationIndex(txt){
-  locIndex={};
-  var lines=splitCSVRows(txt);
-  var headers=parseCSVLine(lines[0],';');
-  var iCod=headers.indexOf('Codigo');
-  var iDesc=headers.indexOf('Descripcion');
-  var iUbi=headers.indexOf('UbicacionCodigo');
-  var iEx=headers.indexOf('Existencias');
-  var iRotM=headers.indexOf('UDS_1Mes');
-  var iRotT=headers.indexOf('UDS_3Meses');
-  var iAlt1=headers.indexOf('UbicacionCodigoAlt1');
-  var iAlt2=headers.indexOf('UbicacionCodigoAlt2');
-
-  function entry(ubi){
-    if(!locIndex[ubi]) locIndex[ubi]={picking:[],sobrestock:[]};
-    return locIndex[ubi];
-  }
-
-  for(var i=1;i<lines.length;i++){
-    var line=lines[i];
-    if(!line) continue;
-    var f=line.split(';');
-    var cod=(f[iCod]||'').trim();
-    var desc=(f[iDesc]||'').substring(0,55);
-
-    // --- Ubicacion principal de picking (cualquier sector: A, B, ...) ---
-    if(iUbi>=0&&iUbi<f.length){
-      var ubiRaw=(f[iUbi]||'').trim();
-      if(ubiRaw){
-        var ubi=normUbi(ubiRaw);
-        if(/^[A-Z][0-9]{4,}/.test(ubi)){
-          entry(ubi).picking.push({
-            c:cod, d:desc,
-            ex: iEx>=0?toInt(f[iEx]):0,
-            rm: iRotM>=0?toInt(f[iRotM]):0,
-            rt: iRotT>=0?toInt(f[iRotT]):0
-          });
-        }
-      }
-    }
-
-    // --- Sobrestock: ubicaciones alternativas dentro de Alt1/Alt2 (cualquier sector) ---
-    var alts=[];
-    if(iAlt1>=0&&iAlt1<f.length) alts.push(f[iAlt1]||'');
-    if(iAlt2>=0&&iAlt2<f.length) alts.push(f[iAlt2]||'');
-    for(var j=0;j<alts.length;j++){
-      var s=alts[j].replace(/"/g,'');
-      var k=0;
-      while(k<s.length-5){
-        var ch=s[k];
-        if(ch>='A'&&ch<='Z'){
-          var raw=s.substring(k,k+9).split(' ').join('').split('\n').join('').split('\r').join('');
-          if(raw.length>=6&&
-             raw[1]>='0'&&raw[1]<='9'&&raw[2]>='0'&&raw[2]<='9'&&
-             raw[3]>='0'&&raw[3]<='9'&&raw[4]>='0'&&raw[4]<='9'&&
-             raw[5]>='0'&&raw[5]<='9'){
-            var ubi2=raw.substring(0,6);
-            var after=s.substring(k+7);
-            var uds=0;
-            var pm=after.indexOf('(');
-            if(pm>=0&&pm<4){
-              var pe=after.indexOf(')',pm);
-              if(pe>pm) uds=parseInt(after.substring(pm+1,pe))||0;
-            }
-            var sob=entry(ubi2).sobrestock;
-            var found=false;
-            for(var x=0;x<sob.length;x++){if(sob[x].c===cod){found=true;break;}}
-            if(!found) sob.push({c:cod,d:desc,u:uds});
-          }
-        }
-        k++;
-      }
-    }
-  }
-}
-
-function sectorBadgeColor(sec){
-  return sec==='B'?'style="background:#fff4e8;color:#c07a00"':'';
-}
-
-function renderUbiRow(ubi){
-  var data=locIndex[ubi];
-  var p=parseInt(ubi.substring(1,3))||0;
-  var n=ubi.length>5?ubi[5]:'-';
-  var sec=ubiSector(ubi);
-  var h='<div class="row" style="flex-direction:column;align-items:flex-start;gap:4px">'+
-     '<div style="display:flex;align-items:center;gap:8px">'+
-       '<span class="badge bs" '+sectorBadgeColor(sec)+'>Sector '+sec+'</span>'+
-       '<div class="ubi-big">'+ubi+'</div>'+
-       '<div class="rmeta">Pasillo '+pad2(p)+' &middot; Nivel '+n+'</div>'+
-     '</div>';
-  if(!data||(!data.picking.length&&!data.sobrestock.length)){
-    h+='<div style="width:100%;padding:6px 0;color:#aaa;font-size:12px">Sin mercancia registrada en esta ubicacion</div></div>';
-    return h;
-  }
-  for(var i=0;i<data.picking.length;i++){
-    var it=data.picking[i];
-    h+='<div style="width:100%;padding:5px 0;border-top:.5px solid #f0f0f0;display:flex;justify-content:space-between;align-items:center;gap:8px">'+
-       '<div><div style="display:flex;align-items:center;gap:5px"><span class="rref">'+it.c+'</span>'+
-       '<span class="badge bg" style="font-size:9px">Picking</span></div>'+
-       '<div class="rdesc" style="max-width:220px">'+it.d+'</div>'+
-       '<div class="rmeta">Rot/mes: '+it.rm+' &middot; Rot/trim: '+it.rt+'</div></div>'+
-       '<span class="badge bp">'+it.ex+' uds</span>'+
-       '</div>';
-  }
-  for(var i=0;i<data.sobrestock.length;i++){
-    var it=data.sobrestock[i];
-    h+='<div style="width:100%;padding:5px 0;border-top:.5px solid #f0f0f0;display:flex;justify-content:space-between;align-items:center;gap:8px">'+
-       '<div><div style="display:flex;align-items:center;gap:5px"><span class="rref">'+it.c+'</span>'+
-       '<span class="badge bv" style="font-size:9px">Sobrestock</span></div>'+
-       '<div class="rdesc" style="max-width:220px">'+it.d+'</div></div>'+
-       (it.u?'<span class="badge bp">'+it.u+' uds</span>':'<span class="badge bw">uds N/D</span>')+
-       '</div>';
-  }
-  h+='</div>';
-  return h;
-}
-
-function doSearchSob(q){
-  var el=document.getElementById('lC');
-  var lbl=document.getElementById('sobConsultaLbl');
-  var inp=document.getElementById('siSob');
-  if(!q||q.length<3){
-    el.innerHTML='<div class="empty">Escanea o escribe una ubicacion para consultar (Sector A o B)</div>';
-    lbl.style.display='none';
-    inp.className='srch';
-    return;
-  }
-  var ql=normUbi(q);
-
-  // Coincidencia exacta (caso tipico al escanear con PDA)
-  if(locIndex[ql]){
-    lbl.style.display='block';
-    lbl.textContent='Mercancia en '+ql;
-    el.innerHTML='<div class="card">'+renderUbiRow(ql)+'</div>';
-    inp.className='srch scan-hit';
-    return;
-  }
-  inp.className='srch';
-
-  // Coincidencia parcial (busqueda manual)
-  var matches=[];
-  for(var u in locIndex){if(u.indexOf(ql)>=0) matches.push(u);}
-  matches.sort();
-  if(matches.length>30) matches=matches.slice(0,30);
-  if(!matches.length){
-    el.innerHTML='<div class="empty">No hay mercancia registrada en esa ubicacion</div>';
-    lbl.style.display='none';
-    return;
-  }
-  lbl.style.display='block';
-  lbl.textContent=matches.length+' ubicacion(es) encontradas';
-  var h='<div class="card">';
-  for(var i=0;i<matches.length;i++) h+=renderUbiRow(matches[i]);
-  el.innerHTML=h+'</div>';
-}
-
-// Modo escaneo continuo: al pulsar Enter (los lectores PDA suelen emular Enter),
-// selecciona todo el texto para que el siguiente escaneo sobreescriba automaticamente
-// sin necesidad de borrar manualmente, y mantiene el foco listo para el proximo escaneo.
-(function(){
-  var inp=document.getElementById('siSob');
-  if(!inp) return;
-  inp.addEventListener('keydown',function(e){
-    if(e.key==='Enter'){
-      e.preventDefault();
-      doSearchSob(inp.value);
-      setTimeout(function(){inp.select();},0);
-    }
-  });
-})();
-
-// ---- LOADING ----
-function showLoading(msg, sub){
-  document.getElementById('loadMsg').textContent=msg||'Cargando...';
-  document.getElementById('loadSub').textContent=sub||'';
-  document.getElementById('loadOverlay').className='load-overlay on';
-}
-function hideLoading(){
-  document.getElementById('loadOverlay').className='load-overlay';
-}
-
-// ---- INIT ----
-fetchCSV();
-loadOccupied();
-loadSobOccupied();
-subscribeRealtime();
-
-// ---- PWA: instalación en pantalla de inicio ----
-var deferredInstallPrompt = null;
-window.addEventListener('beforeinstallprompt', function (e) {
-  e.preventDefault();
-  deferredInstallPrompt = e;
-  var btn = document.getElementById('btnInstall');
-  if (btn) btn.className = 'install-btn on';
-});
-function installApp() {
-  if (!deferredInstallPrompt) return;
-  deferredInstallPrompt.prompt();
-  deferredInstallPrompt.userChoice.finally(function () {
-    deferredInstallPrompt = null;
-    var btn = document.getElementById('btnInstall');
-    if (btn) btn.className = 'install-btn';
-  });
-}
-window.addEventListener('appinstalled', function () {
-  var btn = document.getElementById('btnInstall');
-  if (btn) btn.className = 'install-btn';
-  showToast('App instalada. Ya tienes el icono en la pantalla de inicio.');
-});
-
-// ---- PWA: aviso de sin conexión ----
-function updateOfflineBanner() {
-  var banner = document.getElementById('offlineBanner');
-  if (!banner) return;
-  banner.className = navigator.onLine ? 'offline-banner' : 'offline-banner on';
-}
-window.addEventListener('online', updateOfflineBanner);
-window.addEventListener('offline', updateOfflineBanner);
-updateOfflineBanner();
-
-// ---- PWA: registro del service worker (caché offline del shell y del último CSV) ----
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', function () {
-    navigator.serviceWorker.register('service-worker.js').catch(function (err) {
-      console.warn('No se pudo registrar el service worker:', err);
-    });
-  });
-}
-</script>
-<script>
-// Force pinch zoom on Edge Android
-(function(){
-  var lastScale=1, lastX=0, lastY=0;
-  var meta=document.querySelector('meta[name=viewport]');
-  function setZoom(scale,x,y){
-    scale=Math.min(Math.max(scale,1),5);
-    meta.setAttribute('content','width=device-width, initial-scale='+scale+', minimum-scale=1.0, maximum-scale=5.0, user-scalable=yes');
-  }
-  var startDist=0;
-  document.addEventListener('touchstart',function(e){
-    if(e.touches.length===2){
-      startDist=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);
-    }
-  },{passive:true});
-  document.addEventListener('touchmove',function(e){
-    if(e.touches.length===2){
-      var dist=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);
-      var scale=lastScale*(dist/startDist);
-      setZoom(scale);
-    }
-  },{passive:true});
-  document.addEventListener('touchend',function(e){
-    var meta=document.querySelector('meta[name=viewport]');
-    var content=meta.getAttribute('content');
-    var match=content.match(/initial-scale=([0-9.]+)/);
-    if(match) lastScale=parseFloat(match[1]);
-  },{passive:true});
-})();
-</script>
-</body>
-</html>
+function fixS(){S.eanOk=S.eanOk||{};S.cajaOk=S.cajaOk||{};S.skip=S.skip||{}}
+function save(){S.t=Date.now();try{localStorage.setItem(KEY,JSON.stringify(S))}catch(x){}}
+function msg(t,k){const m=$('#msg');m.className=k?'m-'+k:'';m.textContent=t;clearTimeout(msgT);msgT=setTimeout(()=>{m.textContent='';m.className=''},6000)}
+// ---- modelo
+function allocs(st){const r=[];st.items.forEach(it=>it.alloc.forEach(a=>r.push({it,a,k:akey(st.id,it.code,a.box,a.j)})));return r}
+function stopState(st){const al=allocs(st);let res=0,full=0,units=0,need=0;al.forEach(x=>{need+=x.a.n;const p=S.picks[x.k];if(p!==undefined){res++;units+=p}});
+  return {total:al.length,res,units,need,done:res===al.length,skipped:!!S.skip[st.id]&&res<al.length}}
+function totals(){let u=0,n=0;D.stops.forEach(st=>{const s=stopState(st);u+=s.units;n+=s.need});return {u,n}}
+function boxState(b){const need={},got={};
+  D.stops.forEach(st=>allocs(st).forEach(x=>{if(x.a.box!==b.id)return;const k=x.it.code+'|'+x.a.j;need[k]=(need[k]||0)+x.a.n;const p=S.picks[x.k];got[k]=(got[k]||0)+(p||0)}));
+  let nn=0,gg=0,pend=0;Object.keys(need).forEach(k=>{nn+=need[k];gg+=Math.min(got[k]||0,need[k])});
+  D.stops.forEach(st=>allocs(st).forEach(x=>{if(x.a.box===b.id&&S.picks[x.k]===undefined)pend++}));
+  return {need,got,nn,gg,pend,complete:gg===nn&&pend===0,short:nn-gg}}
+function curStop(){return D.stops.find(st=>!stopState(st).done&&!S.skip[st.id])||D.stops.find(st=>!stopState(st).done)}
+function setPick(st,x,q,why){S.picks[x.k]=q;if(!S.ini)S.ini=new Date().toISOString();
+  S.log.push({t:new Date().toISOString(),stop:st.id,code:x.it.code,box:x.a.box,j:x.a.j,q,need:x.a.n,why:why||''});save()}
+// ---- scan
+let lastErr='',lastOk='';
+function beep(ok){try{const c=new (window.AudioContext||window.webkitAudioContext)();const o=c.createOscillator();o.frequency.value=ok?880:220;o.connect(c.destination);o.start();setTimeout(()=>{o.stop();c.close()},ok?90:350)}catch(x){}}
+function itemAllocs(st,it){return allocs(st).filter(x=>x.it===it)}
+function itemDone(st,it){return itemAllocs(st,it).every(x=>S.picks[x.k]!==undefined)}
+function queue(){const q=[];D.stops.forEach(st=>st.items.forEach(it=>q.push({st,it,id:st.id+'|'+it.code})));return q}
+function curItem(){const q=queue().filter(e=>!itemDone(e.st,e.it));return q.find(e=>!S.skip[e.id])||q.sort((a,b)=>S.skip[a.id]-S.skip[b.id])[0]}
+function onScan(raw){
+  const v=norm(raw);if(!v)return;
+  const bx=D.boxes.find(b=>norm(b.id)===v);if(bx){tab='cajas';open='box:'+bx.id;render();return}
+  const e=curItem();if(!e){msg('No quedan artículos pendientes','ok');return}
+  const code=Object.keys(D.ean).find(c=>norm(D.ean[c])===v);
+  if(!code){lastErr='EAN no reconocido: '+raw.trim()+(/^\d{8,14}$/.test(v)?' (no pertenece a este pedido)':'');lastOk='';beep(false);tab='pick';render();return}
+  if(code!==e.it.code){const o=queue().find(x=>x.it.code===code);lastErr='✖ Has leído '+code+' (EAN '+raw.trim()+') pero ahora toca '+e.it.code+(o?'. El '+code+' se recoge en la parada '+o.st.id+' ('+locTxt(o.st)+').':'.');lastOk='';beep(false);tab='pick';render();return}
+  if(S.eanOk[e.id]){lastErr='';lastOk='EAN ya validado: reparte a las cajas tocando cada una';render();return}
+  S.eanOk[e.id]=true;if(!S.ini)S.ini=new Date().toISOString();S.log.push({t:new Date().toISOString(),stop:e.st.id,code:e.it.code,why:'EAN leído '+raw.trim()});save();
+  lastErr='';lastOk='✔ '+e.it.code+' validado. Mete las unidades en cada caja y toca la caja.';beep(true);tab='pick';render()}
+function cartOrder(){return D.boxes.slice().sort((a,b)=>a.pos.localeCompare(b.pos)||a.id.localeCompare(b.id))}
+function gridHtml(e,ok){let h='<h3 style="margin:14px 0 6px">Carro · '+D.boxes.filter(b=>boxState(b).complete).length+'/'+D.boxes.length+' cajas completas</h3><div class="grid">';
+  cartOrder().forEach(b=>{const s=boxState(b);const pend=e?itemAllocs(e.st,e.it).filter(x=>x.a.box===b.id&&S.picks[x.k]===undefined):[];const n=pend.reduce((z,x)=>z+x.a.n,0);const pc=s.nn?Math.round(100*s.gg/s.nn):0;
+    const cls='bx'+(s.complete?' done':'')+(n?' tgt':'')+(n&&!ok?' lock':'');
+    h+='<div class="'+cls+'"'+(n&&ok?' onclick="boxTapB(\''+b.id+'\')"':'')+'><div class="bp">'+esc(b.pos)+'</div><div class="br">'+esc(b.room)+'</div><div class="bt">📦 '+esc(b.caja)+'</div><div class="br">'+esc(b.cajaDim)+' · '+esc(b.id)+'</div><div class="pb"><i style="width:'+pc+'%"></i></div><div class="bs">'+s.gg+'/'+s.nn+' uds'+(s.complete?' ✓':'')+'</div>'+
+      (n?'<div class="plus">METE '+n+'</div><div style="font-size:12px;font-weight:700">de '+esc(e.it.code)+'</div>'+(ok?'<button class="b g sm" onclick="event.stopPropagation();boxPartB(\''+b.id+'\')">parcial</button>':''):'')+
+      '<details onclick="event.stopPropagation()"><summary>contenido</summary>'+b.items.map(i=>{const g=Math.min(s.got[i.code+'|'+i.j]||0,i.n);return '<div style="font-size:11px;color:'+(g>=i.n?'var(--ok)':'var(--ink)')+'">'+(g>=i.n?'✓ ':'')+esc(i.code)+' '+g+'/'+i.n+'</div>'}).join('')+'</details></div>'});
+  return h+'</div>'}
+function boxTapB(id){const e=curItem();if(!e)return;if(!S.eanOk[e.id]){msg('Lee primero el EAN','er');return}
+  itemAllocs(e.st,e.it).filter(x=>x.a.box===id&&S.picks[x.k]===undefined).forEach(x=>setPick(e.st,x,x.a.n,'caja confirmada'));afterBox(e.st,e.it)}
+function boxPartB(id){const e=curItem();if(!e)return;const als=itemAllocs(e.st,e.it).filter(x=>x.a.box===id&&S.picks[x.k]===undefined);const tot=als.reduce((z,x)=>z+x.a.n,0);
+  const r=prompt('Unidades metidas en '+als[0].a.pos+' (de '+tot+'):');if(r===null)return;let q=parseInt(r,10);if(isNaN(q)||q<0||q>tot){msg('Cantidad no válida','er');return}
+  als.forEach(x=>{const g=Math.min(q,x.a.n);q-=g;setPick(e.st,x,g,'parcial')});afterBox(e.st,e.it)}
+function boxTap(k){const [sid,code]=k.split('|');const st=D.stops.find(s=>s.id==sid);const x=allocs(st).find(y=>y.k===k);setPick(st,x,x.a.n,'caja confirmada');afterBox(st,x.it)}
+function boxPart(k){const [sid]=k.split('|');const st=D.stops.find(s=>s.id==sid);const x=allocs(st).find(y=>y.k===k);const r=prompt('Unidades metidas en '+x.a.pos+' (de '+x.a.n+'):');if(r===null)return;const q=parseInt(r,10);if(isNaN(q)||q<0||q>x.a.n){msg('Cantidad no válida','er');return}setPick(st,x,q,'parcial');afterBox(st,x.it)}
+function afterBox(st,it){if(itemDone(st,it)){const u=itemAllocs(st,it).reduce((z,x)=>z+(S.picks[x.k]||0),0);lastOk=(u>=it.need?'✔ ':'⚠ ')+it.code+' repartido ('+u+'/'+it.need+')';lastErr=''}render()}
+function itemAct(kind){const e=curItem();if(!e)return;const als=itemAllocs(e.st,e.it).filter(x=>S.picks[x.k]===undefined);
+  if(kind==='skip'){S.skip[e.id]=Date.now();save();lastErr='';lastOk='';render();return}
+  if(kind==='manual'){if(!confirm('¿Validar '+e.it.code+' SIN leer el EAN? Queda registrado.'))return;S.eanOk[e.id]=true;S.log.push({t:new Date().toISOString(),stop:e.st.id,code:e.it.code,why:'validado sin EAN'});save();lastOk='⚠ '+e.it.code+' validado sin EAN. Reparte a las cajas.';lastErr=''}
+  if(kind==='none'){if(!confirm('¿Registrar '+e.it.code+' como NO ENCONTRADO (0 uds en todas las cajas pendientes)?'))return;als.forEach(x=>setPick(e.st,x,0,'no encontrado'));lastOk='⚠ '+e.it.code+' no encontrado';lastErr=''}
+  render()}
+// ---- vistas
+const locTxt=st=>st.zona==='SIN'?'SIN UBICACIÓN':st.loc;
+function stepBar(n){const s=['Ir a la ubicación y coger','Leer el EAN','Repartir en las cajas'];return '<div style="display:flex;gap:6px;margin:6px 0">'+s.map((x,i)=>'<div style="flex:1;text-align:center;padding:6px 4px;border-radius:8px;font-size:12px;font-weight:600;background:'+(i+1<n?'var(--okbg)':i+1===n?'var(--ac)':'#e8edf3')+';color:'+(i+1<n?'var(--ok)':i+1===n?'#fff':'var(--mut)')+'">'+(i+1<n?'✓ ':(i+1)+'. ')+x+'</div>').join('')+'</div>'}
+function renderPick(){
+  const e=curItem();let h='';
+  if(lastErr)h+='<div class="err" style="font-size:17px;padding:12px">'+esc(lastErr)+'</div>';
+  if(lastOk)h+='<div class="m-ok" style="padding:10px;border-radius:8px;margin-bottom:8px">'+esc(lastOk)+'</div>';
+  const q=queue();const dn=q.filter(x=>itemDone(x.st,x.it)).length;
+  if(!e)return h+'<div class="card"><div class="cb"><h2>✔ Picking terminado</h2><p>'+dn+'/'+q.length+' artículos resueltos. Revisa que todas las cajas del carro estén en verde y pulsa Finalizar.</p><button class="b ok" onclick="tab=\'fin\';render()">Ir a Finalizar</button></div></div>'+gridHtml(null,false);
+  const st=e.st,it=e.it;const ok=!!S.eanOk[e.id];const skipped=!!S.skip[e.id];
+  const pend=it.alloc.filter(a=>S.picks[akey(st.id,it.code,a.box,a.j)]===undefined);
+  const porRep=pend.reduce((z,a)=>z+a.n,0);
+  h+='<div class="desc">Artículo '+(dn+1)+' de '+q.length+' · parada '+st.id+' de '+D.stops.length+(skipped?' · <b style="color:var(--wa)">lo saltaste antes</b>':'')+'</div>'+stepBar(ok?3:2);
+  h+='<div class="card cur"><div class="cb" style="border:0;text-align:center"><div class="desc" style="margin-top:6px">PASO 1 · VE A ESTA UBICACIÓN</div><div style="font-size:40px;font-weight:800;letter-spacing:1px">'+esc(locTxt(st))+'</div>'+
+   (st.zona==='SIN'?'<div class="err">Este artículo no tiene ubicación y su stock es negativo. Búscalo; si no está, pulsa «No encontrado».</div>':st.zona==='B'?'<span class="tag wa">Almacén B</span>':st.zona==='?'?'<div class="warn">Ubicación no localizada en el mapa: pregunta a tu responsable.</div>':'')+
+   (it.otras&&it.otras.length?'<div class="desc">Si no hay stock aquí, mira también: '+esc(it.otras.join(' · '))+'</div>':'')+'</div></div>';
+  h+='<div class="card"><div class="cb" style="border:0"><div class="desc">COGE DE LA ESTANTERÍA</div><div style="display:flex;align-items:center;justify-content:space-between;gap:10px"><div><div class="code" style="font-size:24px">'+esc(it.code)+'</div><div class="desc" style="font-size:15px">'+esc(it.desc)+'</div></div><div style="text-align:center"><div style="font-size:52px;font-weight:800;line-height:1">'+it.need+'</div><div class="desc">unidades</div></div></div>'+
+   (it.disp<it.need&&st.zona!=='SIN'?'<div class="warn">Puede que no haya stock suficiente ('+it.disp+' disponibles). Coge lo que haya y repártelo.</div>':'')+
+   '<div style="margin-top:10px;padding:10px;border-radius:8px;'+(ok?'background:var(--okbg);color:var(--ok)':'background:var(--wabg);color:var(--wa)')+';font-weight:600">'+
+   (ok?'✔ PASO 2 HECHO · EAN validado. Ya puedes repartir.':'PASO 2 · Escanea el código de barras (EAN) de la caja o bulto del artículo para comprobar que es el correcto.<div style="font-size:18px;margin-top:4px">EAN esperado: '+esc(D.ean[it.code]||'SIN EAN')+'</div>')+'</div></div></div>';
+  h+='<div class="card"><div class="cb" style="border:0"><div class="desc">'+(ok?'PASO 3 · REPARTE LAS UNIDADES':'PASO 3 · (se activa al leer el EAN) REPARTO PREVISTO')+'</div>';
+  if(ok)h+='<div class="m-wa" style="padding:8px;border-radius:8px;margin:6px 0;font-size:14px">Para cada línea: mete en esa caja del carro las unidades indicadas <b>de este artículo ('+esc(it.code)+')</b> y pulsa «✓ Hecho».</div>';
+  h+=it.alloc.map(a=>{const k=akey(st.id,it.code,a.box,a.j);const p=S.picks[k];const b=D.boxes.find(x=>x.id===a.box);
+    const txt='<div style="flex:1"><div style="font-size:17px"><b style="font-size:22px">'+a.n+' uds</b> → caja <b style="font-size:20px">'+esc(a.pos)+'</b> · '+esc(a.room)+'</div><div class="desc">Caja '+esc(b.caja)+(b.virtual?' (no es de la lista)':'')+(a.j>1?' · bulto '+a.j:'')+' · '+esc(a.box)+'</div></div>';
+    if(p!==undefined)return '<div class="al '+(p>=a.n?'ok':p===0?'zero':'part')+'">'+txt+'<b>'+(p>=a.n?'✓ Hecho':'⚠ '+p+'/'+a.n)+'</b></div>';
+    return '<div class="al" style="'+(ok?'border:2px solid var(--ac)':'opacity:.55')+'">'+txt+(ok?'<button class="b ok" style="font-size:16px;padding:12px 14px" onclick="boxTap(\''+k+'\')">✓ Hecho</button><button class="b g sm" onclick="boxPart(\''+k+'\')">parcial</button>':'')+'</div>'}).join('');
+  if(ok)h+='<div class="desc" style="margin-top:6px">Te quedan en la mano: <b>'+porRep+' uds</b> por repartir. Cuando llegues a 0 pasará solo al siguiente artículo.</div>';
+  h+='<div class="row"><button class="b er" onclick="itemAct(\'none\')">No lo encuentro</button><button class="b g" onclick="itemAct(\'manual\')">El código no se lee</button><button class="b g" onclick="itemAct(\'skip\')">Dejar para después</button><button class="b g" onclick="guia()">❓ Ayuda</button></div></div></div>';
+  h+=gridHtml(e,ok);
+  const nx=q.filter(x=>x.id!==e.id&&!itemDone(x.st,x.it)).slice(0,3);
+  if(nx.length)h+='<div class="desc" style="margin-top:8px">Después: '+nx.map(x=>esc(locTxt(x.st))+' → '+esc(x.it.code)+' ×'+x.it.need).join(' &nbsp;|&nbsp; ')+'</div>';
+  return h}
+function guia(){const g=document.getElementById('guia');g.style.display='block'}
+function cierraGuia(){document.getElementById('guia').style.display='none';S.guiaVista=true;save();if(!S.carro){tab='carro';render()}}
+function renderCarro(){const n=D.boxes.length,ok=D.boxes.filter(b=>S.cajaOk[b.id]).length;
+  let h='<div class="card"><div class="cb" style="border:0"><h3>Monta el carro</h3><div class="desc">Haz esto antes de salir: 1) coge cada caja de la lista (tipo de cartón indicado), 2) pega su etiqueta con el POS y la estancia, 3) colócalas en el carro en este orden, 4) toca la fila para marcarla como lista. Después pulsa «Empezar picking». <a href="#" onclick="guia();return false">Ver guía completa</a></div><div class="row"><button class="b g" onclick="lblAll()">🖨 Imprimir todas las etiquetas</button></div></div></div>';
+  D.boxes.forEach(b=>{const u=b.items.reduce((z,i)=>z+i.n,0);h+='<div class="card '+(S.cajaOk[b.id]?'done':'')+'"><div class="ch" onclick="togCaja(\''+b.id+'\')"><div class="num">'+(S.cajaOk[b.id]?'✓':'☐')+'</div><div style="flex:1"><div style="font-size:22px;font-weight:800">'+esc(b.pos)+' · '+esc(b.room)+'</div><div class="desc">'+esc(b.caja)+' · '+esc(b.cajaDim)+' · '+u+' uds'+(b.virtual?' · caja virtual':'')+'</div></div><button class="b g sm" onclick="event.stopPropagation();lbl(\''+b.id+'\')">🖨</button></div></div>'});
+  return h+'<div class="row"><button class="b ok" style="font-size:17px;padding:14px 20px" onclick="empezar()">Empezar picking ('+ok+'/'+n+' cajas listas)</button></div>'}
+function togCaja(id){S.cajaOk[id]=!S.cajaOk[id];save();render()}
+function empezar(){const n=D.boxes.filter(b=>!S.cajaOk[b.id]).length;if(n&&!confirm('Faltan '+n+' cajas por marcar. ¿Empezar igualmente?'))return;S.carro=true;save();tab='pick';render()}
+function renderRuta(){let h='<div class="desc" style="margin-bottom:8px">Vista general de la ruta (solo consulta). El picking se hace en la pestaña Picking.</div>';
+  D.stops.forEach(st=>{const s=stopState(st);h+='<div class="card '+(s.done?'done':'')+'"><div class="ch"><div class="num">'+(s.done?'✓':st.id)+'</div><div style="flex:1"><div class="loc" style="font-size:17px">'+esc(locTxt(st))+'</div>'+
+    st.items.map(it=>{const d=itemDone(st,it);const u=itemAllocs(st,it).reduce((z,x)=>z+(S.picks[x.k]||0),0);return '<div class="desc">'+(d?(u>=it.need?'✓ ':'⚠ '):'○ ')+esc(it.code)+' ×'+it.need+(d&&u<it.need?' (recogidas '+u+')':'')+'</div>'}).join('')+'</div>'+
+    (st.zona==='SIN'?'<span class="tag er">sin ubicación</span>':st.zona==='B'?'<span class="tag wa">Almacén B</span>':st.zona==='?'?'<span class="tag wa">no mapeada</span>':'')+'</div></div>'});return h}
+function tgb(id){open=(open==='box:'+id?-1:'box:'+id);render()}
+function renderCajas(){let h='<div class="row"><button class="b g" onclick="lblAll()">🖨 Imprimir todas las etiquetas</button></div>';
+  D.boxes.forEach(b=>{const s=boxState(b);const o=open==='box:'+b.id;const pc=s.nn?Math.round(100*s.gg/s.nn):0;
+    h+='<div class="card '+(s.complete?'done':'')+'"><div class="ch" onclick="tgb(\''+b.id+'\')"><div class="num">'+(s.complete?'✓':b.bloque)+'</div><div style="flex:1"><b style="font-size:17px">'+esc(b.id)+'</b> <span class="tag">'+esc(b.pos)+' · '+esc(b.room)+'</span><div class="desc">Caja '+esc(b.caja)+' · '+esc(b.cajaDim)+' · '+esc(b.carrier||'')+'</div><div class="pb"><i style="width:'+pc+'%"></i></div></div><span class="tag '+(s.complete?'ok':s.pend?'':'wa')+'">'+s.gg+'/'+s.nn+'</span></div>';
+    if(o){h+='<div class="cb">'+(b.virtual?'<div class="warn">Caja virtual: '+esc(b.caja)+' (no es una caja de cartón de la lista).</div>':'')+'<table><tr><th>Artículo</th><th>Descripción</th><th>Necesario</th><th>En caja</th></tr>';
+      b.items.forEach(it=>{const k=it.code+'|'+it.j;const g=Math.min(s.got[k]||0,it.n);h+='<tr><td><b>'+esc(it.code)+'</b>'+(it.j>1?' (bulto '+it.j+')':'')+'</td><td>'+esc(it.desc)+'</td><td>'+it.n+'</td><td style="color:'+(g>=it.n?'var(--ok)':'var(--er)')+'"><b>'+g+'</b></td></tr>'});
+      h+='</table><div class="row"><button class="b" onclick="lbl(\''+b.id+'\')">🖨 Etiqueta</button>'+
+      (s.pend===0&&!s.complete?'<span class="err" style="margin:0">Caja INCOMPLETA: faltan '+s.short+' uds</span>':'')+
+      (s.complete?'<span class="tag ok">Completa</span>':'')+'</div></div>'}
+    h+='</div>'});return h}
+function lblHtml(b){return '<div class="lbl"><div class="lp">'+esc(b.pos)+'</div><div class="lr">'+esc(b.room)+'</div></div>'}
+function lbl(id){$('#prt').innerHTML=lblHtml(D.boxes.find(x=>x.id===id));window.print()}
+function lblAll(){$('#prt').innerHTML=D.boxes.map(lblHtml).join('');window.print()}
+function renderMapa(){const sc=11,W=60*sc,H=108*sc;const X=c=>c*sc,Y=r=>r*sc;let s='<svg viewBox="0 0 '+W+' '+H+'">';
+  D.blocks.forEach(b=>s+='<rect x="'+X(b.c0)+'" y="'+Y(b.r0)+'" width="'+(X(b.c1)-X(b.c0))+'" height="'+(Y(b.r1)-Y(b.r0))+'" fill="#e6eaf0" stroke="#b9c2cf"/><text x="'+(X(b.c0)+3)+'" y="'+(Y(b.r0)+10)+'" font-size="9" fill="#6b7686">B'+b.b+'</text>');
+  s+='<polyline fill="none" stroke="#0b5cab" stroke-width="2.5" stroke-dasharray="6 3" points="'+D.path.map(p=>X(p[1])+','+Y(p[0])).join(' ')+'"/>';
+  s+='<text x="'+X(D.exp[1])+'" y="'+(Y(D.exp[0])+22)+'" font-size="11" font-weight="700" fill="#12263f">EXPEDICIONES (salida/llegada)</text><circle cx="'+X(D.exp[1])+'" cy="'+Y(D.exp[0])+'" r="6" fill="#12263f"/>';
+  const cs=curStop();D.stops.forEach(st=>{const p=D.stopsXY[st.id];if(!p)return;const d=stopState(st).done;const c=cs&&cs.id===st.id;
+    s+='<g onclick="goStop('+st.id+')" style="cursor:pointer"><circle cx="'+X(p[1])+'" cy="'+Y(p[0])+'" r="'+(c?11:9)+'" fill="'+(d?'#1b8a4b':c?'#c0392b':'#0b5cab')+'" stroke="#fff" stroke-width="2"/><text x="'+X(p[1])+'" y="'+(Y(p[0])+3.5)+'" text-anchor="middle" font-size="10" font-weight="700" fill="#fff">'+st.id+'</text></g>'});
+  s+='</svg>';
+  const off=D.stops.filter(st=>!D.stopsXY[st.id]);
+  return '<div class="desc" style="margin-bottom:6px">Azul = pendiente · rojo = parada actual · verde = hecha. Distancia ruta optimizada: '+D.ruta.largo+' (orden de entrada: '+D.ruta.ingenuo+').</div>'+s+(off.length?'<div class="warn">Fuera del mapa A: '+off.map(st=>'parada '+st.id+' ('+esc(locTxt(st))+')').join(', ')+'</div>':'')}
+function goStop(id){tab='ruta';render()}
+function incidencias(){const r=[];
+  D.stops.forEach(st=>allocs(st).forEach(x=>{const p=S.picks[x.k];if(p!==undefined&&p<x.a.n)r.push({tipo:p===0?'No encontrado':'Parcial',stop:st.id,loc:locTxt(st),code:x.it.code,box:x.a.box,pos:x.a.pos,need:x.a.n,got:p})}));return r}
+function renderInc(){const inc=incidencias();let h='<div class="card"><div class="cb"><h3>Faltas registradas ('+inc.length+')</h3>';
+  h+=inc.length?'<table><tr><th>Tipo</th><th>Parada</th><th>Artículo</th><th>Caja</th><th>Pedido</th><th>Recogido</th></tr>'+inc.map(i=>'<tr><td>'+i.tipo+'</td><td>'+i.stop+' '+esc(i.loc)+'</td><td>'+esc(i.code)+'</td><td>'+i.box+' '+i.pos+'</td><td>'+i.need+'</td><td>'+i.got+'</td></tr>').join('')+'</table>':'<div class="desc">Ninguna.</div>';
+  h+='</div></div><div class="card"><div class="cb"><h3>Líneas sin código de artículo (no se pueden pickear)</h3><table><tr><th>POS</th><th>Estancia</th><th>Descripción</th><th>Uds</th></tr>'+D.sinCodigo.map(i=>'<tr><td>'+esc(i.pos)+'</td><td>'+esc(i.room)+'</td><td>'+esc(i.desc)+'</td><td>'+i.units+'</td></tr>').join('')+'</table></div></div>';
+  h+='<div class="card"><div class="cb"><h3>Avisos del cálculo</h3>'+D.avisos.map(a=>'<div class="warn">'+esc(a)+'</div>').join('')+'</div></div>';return h}
+function resultado(){const t=totals();const cajas=D.boxes.map(b=>{const s=boxState(b);return {caja:b.id,pos:b.pos,estancia:b.room,tipo:b.caja,completa:s.complete,uds_necesarias:s.nn,uds_en_caja:s.gg,faltan:s.short,pendiente:s.pend}});
+  return {ot:D.id,operario:S.oper,inicio:S.ini,fin:new Date().toISOString(),uds_pedido:t.n,uds_recogidas:t.u,cajas,incidencias:incidencias(),paradas:D.stops.map(st=>{const s=stopState(st);return {parada:st.id,ubicacion:locTxt(st),estado:s.done?'hecha':S.skip[st.id]?'saltada':'pendiente',uds:s.units,de:s.need}}),sin_codigo:D.sinCodigo,ean_validados:Object.keys(S.eanOk),movimientos:S.log}}
+function renderFin(){const r=resultado();const pend=D.stops.filter(st=>!stopState(st).done).length;const inc=r.cajas.filter(c=>!c.completa).length;
+  return '<div class="card"><div class="cb"><h3>Estado</h3><p>Paradas pendientes: <b>'+pend+'</b> · Cajas completas: <b>'+(r.cajas.length-inc)+'/'+r.cajas.length+'</b> · Unidades: <b>'+r.uds_recogidas+'/'+r.uds_pedido+'</b></p>'+
+  (inc?'<div class="warn">'+inc+' caja(s) incompleta(s): '+r.cajas.filter(c=>!c.completa).map(c=>c.caja+(c.faltan?' (faltan '+c.faltan+')':' (pendiente)')).join(', ')+'</div>':'<div class="m-ok" style="padding:8px;border-radius:6px">✔ Todas las cajas completas</div>')+
+  '<div class="row"><button class="b g" onclick="guardar()">💾 Guardar progreso</button><button class="b ok" onclick="devolver()">📤 Devolver OT (con resultado)</button><button class="b g" onclick="csv()">CSV resultado</button><button class="b er" onclick="reset()">Reiniciar</button></div></div></div>'}
+// ---- salida
+function snapshot(withRes){const c=document.documentElement.cloneNode(true);c.querySelector('#app').innerHTML='';c.querySelector('#msg').innerHTML='';c.querySelector('#prt').innerHTML='';c.querySelector('#scan').removeAttribute('value');
+  c.querySelector('#ot-estado').textContent=JSON.stringify(S);c.querySelector('#ot-resultado').textContent=withRes?JSON.stringify(resultado()):'null';return '<!DOCTYPE html>\n'+c.outerHTML}
+function dl(name,txt,mime){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([txt],{type:mime||'text/html'}));a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500)}
+const stamp=()=>new Date().toISOString().slice(0,16).replace(/[-:T]/g,'')
+function guardar(){save();dl('OT_PICKING_PROGRESO_'+stamp()+'.html',snapshot(false));msg('Progreso guardado','ok')}
+function devolver(){const pend=D.stops.filter(st=>!stopState(st).done).length;if(pend&&!confirm('Quedan '+pend+' paradas sin resolver. ¿Devolver igualmente?'))return;S.fin=new Date().toISOString();save();dl('OT_PICKING_COMPLETADA_'+stamp()+'.html',snapshot(true))}
+function csv(){const r=resultado();const rows=[['caja','pos','estancia','tipo','completa','uds_necesarias','uds_en_caja','faltan']].concat(r.cajas.map(c=>[c.caja,c.pos,c.estancia,c.tipo,c.completa?'SI':'NO',c.uds_necesarias,c.uds_en_caja,c.faltan]));dl('OT_PICKING_RESULTADO_'+stamp()+'.csv','﻿'+rows.map(x=>x.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(';')).join('\n'),'text/csv')}
+function reset(){if(!confirm('Se borrará todo el progreso. ¿Seguro?'))return;try{localStorage.removeItem(KEY)}catch(x){}S=null;loadState();S.picks={};S.log=[];S.eanOk={};S.carro=false;tab='carro';save();render()}
+// ---- render
+function render(){const t=totals();$('#hprog').textContent=t.u+'/'+t.n+' uds · '+D.stops.filter(s=>stopState(s).done).length+'/'+D.stops.length+' paradas';$('#hbar').style.width=(t.n?100*t.u/t.n:0)+'%';
+  document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('on',b.dataset.t===tab));
+  $('#app').innerHTML=tab==='carro'?renderCarro():tab==='pick'?renderPick():tab==='ruta'?renderRuta():tab==='cajas'?renderCajas():tab==='mapa'?renderMapa():tab==='inc'?renderInc():renderFin();
+  $('#oper').value=S.oper||'';if(tab==='pick')$('#scan').focus()}
+document.getElementById('nav').onclick=e=>{if(e.target.dataset.t){tab=e.target.dataset.t;render()}};
+$('#oper').onchange=e=>{S.oper=e.target.value;save()};
+$('#scan').addEventListener('keydown',e=>{if(e.key==='Enter'){const v=e.target.value;e.target.value='';onScan(v)}});
+$('#scbtn').onclick=()=>{const i=$('#scan');const v=i.value;i.value='';onScan(v)};
+$('#fecha').textContent=D.fecha;
+loadState();fixS();if(!S.carro)tab='carro';render();if(!S.guiaVista)guia();
+</script></body></html>
