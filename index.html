@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#1a1a2e">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<title>Almacén A + B — Consulta PDA</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f0f0f0;min-height:100vh;font-size:14px;color:#1a1a2e}
+.hdr{background:#1a1a2e;color:#fff;padding:10px 14px;position:sticky;top:0;z-index:50;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.hdr-t{font-size:15px;font-weight:700}
+.hdr-sub{font-size:10px;color:#8888aa;margin-top:1px}
+.zsw{display:flex;border:1px solid #3a3a5e;border-radius:6px;overflow:hidden}
+.zsw button{background:none;border:none;color:#8888aa;font-weight:800;font-size:13px;padding:6px 14px;cursor:pointer}
+.zsw button.on{background:#e94560;color:#fff}
+.tabs{display:flex;background:#16213e;position:sticky;top:50px;z-index:49}
+.tab{flex:1;padding:10px 2px;font-size:11px;font-weight:700;color:#6677aa;text-align:center;cursor:pointer;letter-spacing:.03em;text-transform:uppercase;border-bottom:2px solid transparent}
+.tab.on{color:#e94560;border-bottom-color:#e94560}
+.wrap{padding:12px}
+.card{background:#fff;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,.08);overflow:hidden;margin-bottom:10px;padding:12px}
+.inp{width:100%;padding:12px;font-size:18px;border:2px solid #d0d0e0;border-radius:8px;background:#fff;text-transform:uppercase}
+.inp:focus{outline:none;border-color:#e94560}
+.btn{background:#e94560;color:#fff;border:none;border-radius:8px;padding:11px 14px;font-weight:700;font-size:14px;cursor:pointer}
+.btn.sec{background:#16213e}
+.btn.sm{padding:6px 10px;font-size:12px}
+.row{display:flex;gap:8px;align-items:center}
+.lbl{font-size:10px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.05em;margin:12px 0 6px}
+.code{font-weight:800;font-size:15px}
+.desc{color:#444;margin-top:2px}
+.badges{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+.b{font-size:11px;font-weight:700;border-radius:10px;padding:2px 8px;background:#eceef7;color:#334}
+.b.pk{background:#dbeafe;color:#1d4ed8}.b.so{background:#fde9c8;color:#a05a00}.b.ob{background:#fde0e4;color:#c01030}.b.ok{background:#d9f5e0;color:#157a35}
+.loc{display:inline-block;font-family:ui-monospace,Menlo,Consolas,monospace;font-weight:700;border-radius:6px;padding:3px 8px;margin:2px 4px 2px 0;cursor:pointer;border:1px solid transparent}
+.loc.pk{background:#dbeafe;color:#1d4ed8}.loc.so{background:#fde9c8;color:#a05a00}.loc.free{background:#eef0f6;color:#334;border-color:#d0d0e0}
+.big{font-size:24px;font-weight:800;font-family:ui-monospace,Menlo,Consolas,monospace}
+.item{border-top:1px solid #eee;padding:10px 0}.item:first-child{border-top:none}
+.muted{color:#888;font-size:12px}
+.bar{height:8px;background:#e6e8f2;border-radius:4px;margin-top:6px;overflow:hidden}.bar>i{display:block;height:100%;background:#e94560}
+.empty{text-align:center;color:#888;padding:24px 8px}
+.note{background:#fff8e1;border-left:4px solid #f5b400;padding:8px 10px;border-radius:4px;font-size:12px;margin-bottom:10px}
+#ov{position:fixed;inset:0;background:rgba(26,26,46,.92);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:100;gap:12px;text-align:center;padding:20px}
+.sp{width:36px;height:36px;border:4px solid #3a3a5e;border-top-color:#e94560;border-radius:50%;animation:s 1s linear infinite}@keyframes s{to{transform:rotate(360deg)}}
+.hide{display:none!important}
+.stat{display:flex;gap:8px;margin-bottom:10px}.stat>div{flex:1;background:#fff;border-radius:8px;padding:8px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.08)}.stat b{display:block;font-size:20px}.stat span{font-size:10px;color:#888;text-transform:uppercase}
+details summary{cursor:pointer;font-weight:700;padding:6px 0}
+</style>
+</head>
+<body>
+<div id="ov"><div class="sp"></div><div id="ovt">Cargando datos…</div><button class="btn sec hide" id="ovbtn">📂 Cargar CSV manualmente</button></div>
+<input type="file" id="file" accept=".csv,text/csv" class="hide">
+
+<div class="hdr">
+  <div><div class="hdr-t">Almacén A + B</div><div class="hdr-sub" id="sub">Consulta PDA</div></div>
+  <div class="row"><div class="zsw"><button id="zA" class="on">A</button><button id="zB">B</button></div>
+  <button class="btn sec sm" id="loadbtn" title="Cargar otro CSV">📂</button></div>
+</div>
+<div class="tabs" id="tabs"></div>
+<div class="wrap" id="view"></div>
+
+<script>
+(function(){
+'use strict';
+var CSV_URL='Almacen_A.csv';
+var DB={rows:[],byCod:{},locs:{},ready:false,date:''};
+var S={zone:'A',tab:'consultar',q:'',loc:'',ignored:{}};
+try{S.ignored=JSON.parse(localStorage.getItem('alm_ignoradas')||'{}');}catch(e){}
+
+function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+function num(s){var n=parseFloat(String(s||'').replace(',','.'));return isNaN(n)?0:n;}
+function $(id){return document.getElementById(id);}
+
+/* ---------- CSV (comillas, saltos de línea dentro de campo, ;) ---------- */
+function parseCSV(t){
+  var rows=[],row=[],f='',q=false,i=0,n=t.length,c;
+  if(t.charCodeAt(0)===0xFEFF)i=1;
+  for(;i<n;i++){
+    c=t[i];
+    if(q){
+      if(c==='"'){ if(t[i+1]==='"'){f+='"';i++;} else q=false; }
+      else f+=c;
+    }else{
+      if(c==='"')q=true;
+      else if(c===';'){row.push(f);f='';}
+      else if(c==='\n'){row.push(f);rows.push(row);row=[];f='';}
+      else if(c==='\r'){}
+      else f+=c;
+    }
+  }
+  if(f!==''||row.length){row.push(f);rows.push(row);}
+  return rows;
+}
+
+/* ---------- Ubicaciones: A10040 / A10 04 0 / A05 21 1 (68) / C01 03-04 1 ---------- */
+var LOCRE=/(?:^|[^0-9A-Za-z])([A-E])\s*(\d{2})\s*(\d{2})(?:\s*-\s*(\d{2}))?\s*(\d)(?:\s*\(\s*(\d+(?:[.,]\d+)?)\s*\))?/g;
+function mk(z,b,c,n){return z+b+c+n;}
+function parseLocs(txt){
+  var out=[],m,s=' '+String(txt||'').toUpperCase();
+  LOCRE.lastIndex=0;
+  while((m=LOCRE.exec(s))){
+    var c1=parseInt(m[3],10),c2=m[4]?parseInt(m[4],10):c1,q=m[6]?num(m[6]):null;
+    if(c2<c1||c2-c1>20)c2=c1;
+    for(var c=c1;c<=c2;c++)out.push({cod:mk(m[1],m[2],('0'+c).slice(-2),m[5]),qty:q});
+    LOCRE.lastIndex=m.index+m[0].length-0;
+  }
+  return out;
+}
+function normInput(t){
+  var r=parseLocs(String(t||'').trim());
+  return r.length?r[0].cod:'';
+}
+function fmtLoc(c){return c.slice(0,3)+' '+c.slice(3,5)+' '+c.slice(5);}
+function nivel(c){return parseInt(c.slice(5),10);}
+function bloque(c){return parseInt(c.slice(1,3),10);}
+function col(c){return parseInt(c.slice(3,5),10);}
+
+/* ---------- Carga ---------- */
+function build(rows){
+  var h=rows[0].map(function(x){return x.trim();}),ix={};
+  h.forEach(function(k,i){ix[k]=i;});
+  var need=['Codigo','Descripcion','UbicacionCodigo'];
+  for(var k=0;k<need.length;k++)if(!(need[k] in ix))throw new Error('Falta la columna '+need[k]);
+  function g(r,k){return k in ix?(r[ix[k]]||'').trim():'';}
+  DB.rows=[];DB.byCod={};DB.locs={};
+  for(var i=1;i<rows.length;i++){
+    var r=rows[i];if(r.length<h.length-2)continue;
+    var a={cod:g(r,'Codigo'),desc:g(r,'Descripcion'),ean:g(r,'EAN'),exist:num(g(r,'Existencias')),
+      u1:num(g(r,'UDS_1Mes')),u3:num(g(r,'UDS_3Meses')),obs:g(r,'Obsoleto').toUpperCase()==='VERDADERO',
+      pick:[],sob:[]};
+    if(!a.cod)continue;
+    var p=parseLocs(g(r,'UbicacionCodigo'));
+    if(p.length)a.pick=p.map(function(x){return x.cod;});
+    var alt=parseLocs(g(r,'UbicacionCodigoAlt1')).concat(parseLocs(g(r,'UbicacionCodigoAlt2')));
+    a.sob=alt;
+    DB.rows.push(a);DB.byCod[a.cod]=a;
+    a.pick.forEach(function(c){(DB.locs[c]=DB.locs[c]||[]).push({a:a,t:'pk',qty:null});});
+    alt.forEach(function(x){(DB.locs[x.cod]=DB.locs[x.cod]||[]).push({a:a,t:'so',qty:x.qty});});
+  }
+  DB.ready=true;
+}
+function loadText(t,label){
+  var rows=parseCSV(t);build(rows);
+  DB.date=label||'';
+  $('ov').classList.add('hide');
+  $('sub').textContent='Consulta PDA · '+DB.rows.length.toLocaleString('es-ES')+' refs'+(DB.date?' · '+DB.date:'');
+  render();
+}
+function decode(buf){
+  try{return new TextDecoder('utf-8',{fatal:true}).decode(buf);}
+  catch(e){return new TextDecoder('iso-8859-1').decode(buf);}
+}
+function fetchCSV(){
+  $('ov').classList.remove('hide');$('ovt').textContent='Cargando datos…';$('ovbtn').classList.add('hide');
+  fetch(CSV_URL+'?t='+Date.now()).then(function(r){
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    var lm=r.headers.get('last-modified');
+    return r.arrayBuffer().then(function(b){return {b:b,lm:lm};});
+  }).then(function(o){
+    // dar un respiro al navegador para pintar el spinner
+    setTimeout(function(){
+      try{loadText(decode(o.b),o.lm?new Date(o.lm).toLocaleDateString('es-ES'):'');}
+      catch(e){fail(e);}
+    },30);
+  }).catch(fail);
+}
+function fail(e){
+  $('ovt').textContent='No se pudo cargar Almacen_A.csv ('+(e&&e.message||e)+')';
+  $('ovbtn').classList.remove('hide');
+  $('ov').querySelector('.sp').classList.add('hide');
+}
+
+/* ---------- Render ---------- */
+var TABS_A=[['consultar','Consultar'],['buscar','Buscar'],['vacias','Vacías'],['sobre','Sobrestock'],['rot','Rotación']];
+var TABS_B=[['consultar','Consultar'],['buscar','Buscar']];
+function renderTabs(){
+  var T=S.zone==='A'?TABS_A:TABS_B;
+  if(!T.some(function(t){return t[0]===S.tab;}))S.tab='consultar';
+  $('tabs').innerHTML=T.map(function(t){return '<div class="tab'+(t[0]===S.tab?' on':'')+'" data-t="'+t[0]+'">'+t[1]+'</div>';}).join('');
+  Array.prototype.forEach.call($('tabs').children,function(el){el.onclick=function(){S.tab=el.getAttribute('data-t');render();};});
+  $('zA').className=S.zone==='A'?'on':'';$('zB').className=S.zone==='B'?'on':'';
+}
+function render(){
+  renderTabs();
+  if(!DB.ready){return;}
+  var v=$('view');
+  ({consultar:vConsultar,buscar:vBuscar,vacias:vVacias,sobre:vSobre,rot:vRot})[S.tab](v);
+}
+function artCard(a,focusLoc){
+  var h='<div class="item"><div class="code">'+esc(a.cod)+'</div><div class="desc">'+esc(a.desc)+'</div><div class="badges">';
+  h+='<span class="b '+(a.exist>0?'ok':'')+'">Stock '+a.exist+'</span>';
+  h+='<span class="b">1M: '+a.u1+'</span><span class="b">3M: '+a.u3+'</span>';
+  if(a.obs)h+='<span class="b ob">Obsoleto</span>';
+  h+='</div><div style="margin-top:6px">';
+  a.pick.forEach(function(c){h+='<span class="loc pk" data-loc="'+c+'">'+fmtLoc(c)+' · picking</span>';});
+  a.sob.forEach(function(x){h+='<span class="loc so" data-loc="'+x.cod+'">'+fmtLoc(x.cod)+(x.qty!=null?' ('+x.qty+')':'')+'</span>';});
+  if(!a.pick.length&&!a.sob.length)h+='<span class="muted">Sin ubicación A–E registrada</span>';
+  return h+'</div></div>';
+}
+function bindLocs(root){
+  Array.prototype.forEach.call(root.querySelectorAll('[data-loc]'),function(el){
+    el.onclick=function(){
+      var c=el.getAttribute('data-loc');
+      S.zone=c[0]==='B'?'B':(c[0]==='A'?'A':S.zone);S.tab='consultar';S.loc=c;render();window.scrollTo(0,0);
+    };
+  });
+}
+
+/* --- Consultar (escaneo / tecleo de ubicación) --- */
+function vConsultar(v){
+  v.innerHTML='<div class="card"><div class="lbl" style="margin-top:0">Escanea o escribe la ubicación</div>'+
+    '<div class="row"><input id="li" class="inp" inputmode="text" autocomplete="off" autocapitalize="characters" placeholder="A10040 · A10 04 0" value="'+esc(S.loc?S.loc:'')+'">'+
+    '<button class="btn" id="lgo">OK</button></div></div><div id="lres"></div>';
+  var inp=$('li');
+  function go(){
+    var raw=inp.value.trim();if(!raw){$('lres').innerHTML='';return;}
+    var c=normInput(raw);S.loc=c||'';
+    if(!c){$('lres').innerHTML='<div class="empty">No reconozco «'+esc(raw)+'» como ubicación.<br>Formato: letra, bloque (2), columna (2), nivel (1).</div>';return;}
+    var L=DB.locs[c]||[],h='<div class="card"><div class="big">'+fmtLoc(c)+'</div><div class="muted">Almacén '+c[0]+' · bloque '+c.slice(1,3)+' · columna '+c.slice(3,5)+' · nivel '+c.slice(5)+'</div>';
+    if(!L.length){
+      h+='<div class="badges"><span class="b ok">LIBRE</span></div><div class="muted" style="margin-top:6px">Ningún artículo la tiene registrada en el CSV.</div>';
+    }else{
+      h+='<div class="badges">'+(L.some(function(x){return x.t==='pk';})?'<span class="b pk">Picking</span>':'')+(L.some(function(x){return x.t==='so';})?'<span class="b so">Sobrestock</span>':'')+'</div>';
+      L.sort(function(a,b){return a.t===b.t?0:(a.t==='pk'?-1:1);});
+      L.forEach(function(x){
+        h+='<div class="item"><div class="code">'+esc(x.a.cod)+'</div><div class="desc">'+esc(x.a.desc)+'</div><div class="badges">'+
+          '<span class="b '+x.t+'">'+(x.t==='pk'?'Picking':'Sobrestock')+(x.qty!=null?' · '+x.qty+' uds':'')+'</span>'+
+          '<span class="b">Stock total '+x.a.exist+'</span><span class="b">1M: '+x.a.u1+'</span><span class="b">3M: '+x.a.u3+'</span>'+
+          (x.a.obs?'<span class="b ob">Obsoleto</span>':'')+'</div></div>';
+      });
+    }
+    $('lres').innerHTML=h+'</div>';
+    inp.select();
+  }
+  $('lgo').onclick=go;
+  inp.onkeydown=function(e){if(e.key==='Enter'||e.keyCode===13){e.preventDefault();go();}};
+  inp.onfocus=function(){inp.select();};
+  if(S.loc)go();
+  inp.focus();
+}
+
+/* --- Buscar artículo --- */
+function vBuscar(v){
+  v.innerHTML='<div class="card"><input id="bq" class="inp" style="text-transform:none" placeholder="Código, descripción o EAN" autocomplete="off" value="'+esc(S.q)+'"></div><div id="bres"></div>';
+  var inp=$('bq');
+  function go(){
+    S.q=inp.value;var q=S.q.trim().toUpperCase(),res=$('bres');
+    if(q.length<2){res.innerHTML='<div class="empty">Escribe al menos 2 caracteres</div>';return;}
+    var terms=q.split(/\s+/),out=[];
+    for(var i=0;i<DB.rows.length&&out.length<60;i++){
+      var a=DB.rows[i];
+      if(!a.pick.length&&!a.sob.length)continue;
+      if(S.zone==='B'&&!(a.pick.concat(a.sob.map(function(x){return x.cod;})).some(function(c){return c[0]==='B';})))continue;
+      if(S.zone==='A'&&!a.pick.length)continue; // en A solo artículos con picking válido
+      var hay=(a.cod+' '+a.desc+' '+a.ean).toUpperCase();
+      if(terms.every(function(t){return hay.indexOf(t)>=0;}))out.push(a);
+    }
+    res.innerHTML=out.length?'<div class="card">'+out.map(function(a){return artCard(a);}).join('')+'</div>'+(out.length>=60?'<div class="muted" style="text-align:center">Mostrando los 60 primeros</div>':''):'<div class="empty">Sin resultados</div>';
+    bindLocs(res);
+  }
+  inp.oninput=go;go();
+}
+
+/* --- Huecos (sin plano: análisis de la secuencia de ubicaciones) --- */
+function pickLevels(b){return b<=5?[0,1]:[0];}
+function sobLevels(b){return b<=5?[2,3]:[1,2,3];}
+function scan(){
+  var maxCol={},used={},cols={};
+  Object.keys(DB.locs).forEach(function(c){
+    if(c[0]!=='A')return;
+    var b=bloque(c);
+    maxCol[b]=Math.max(maxCol[b]||0,col(c));
+  });
+  return {maxCol:maxCol};
+}
+function freeList(kind){
+  var info=scan(),out={};
+  Object.keys(info.maxCol).forEach(function(bs){
+    var b=+bs,lv=kind==='pk'?pickLevels(b):sobLevels(b);
+    // columnas mín/máx realmente usadas en esos niveles
+    var mn=999,mx=0;
+    for(var c=1;c<=info.maxCol[b];c++)lv.forEach(function(n){
+      var code=mk('A',('0'+b).slice(-2),('0'+c).slice(-2),n);
+      if(DB.locs[code]){mn=Math.min(mn,c);mx=Math.max(mx,c);}
+    });
+    if(mx===0)return;
+    if(kind==='so'){mn=1;mx=info.maxCol[b];}
+    for(var c2=mn;c2<=mx;c2++)lv.forEach(function(n){
+      var code=mk('A',('0'+b).slice(-2),('0'+c2).slice(-2),n);
+      if(DB.locs[code]||S.ignored[code])return;
+      (out[b]=out[b]||[]).push(code);
+    });
+  });
+  return out;
+}
+function vFree(v,kind,title,note){
+  var F=freeList(kind),tot=0,keys=Object.keys(F).sort(function(a,b){return a-b;});
+  keys.forEach(function(k){tot+=F[k].length;});
+  var h='<div class="note">'+note+'</div><div class="stat"><div><b>'+tot+'</b><span>libres</span></div><div><b>'+keys.length+'</b><span>pasillos</span></div></div>';
+  if(!tot)h+='<div class="empty">No se han detectado huecos</div>';
+  keys.forEach(function(k){
+    h+='<div class="card"><details><summary>Pasillo A'+('0'+k).slice(-2)+' · '+F[k].length+' libres</summary><div style="margin-top:6px">'+
+      F[k].map(function(c){return '<span class="loc free" data-ign="'+c+'" data-loc="'+c+'">'+fmtLoc(c)+'</span>';}).join('')+
+      '</div></details></div>';
+  });
+  v.innerHTML=h;bindLocs(v);
+  h='';
+}
+function vVacias(v){
+  vFree(v,'pk','Vacías','Huecos de <b>picking</b> detectados por secuencia (A01–A05 niveles 0–1; A06–A16 nivel 0). Es una estimación sin plano: pilares o pasos pueden aparecer como libres. Toca una ubicación para consultarla.');
+}
+function vSobre(v){
+  vFree(v,'so','Sobrestock','Ubicaciones de <b>sobrestock</b> libres (A01–A05 niveles 2–3; A06–A16 niveles 1–3), calculadas sin plano de almacén. Pueden incluir posiciones que no existen físicamente.');
+}
+
+/* --- Rotación --- */
+function vRot(v){
+  var L=DB.rows.filter(function(a){return a.pick.some(function(c){return c[0]==='A';})&&!a.obs;});
+  L.sort(function(a,b){return (b.u1-a.u1)||(b.u3-a.u3);});
+  L=L.slice(0,40);var mx=Math.max(1,L.length?L[0].u1:1);
+  v.innerHTML='<div class="note">Top 40 referencias de picking en A por consumo del último mes.</div><div class="card">'+
+    L.map(function(a,i){return '<div class="item"><div class="row" style="justify-content:space-between"><span class="code">'+(i+1)+'. '+esc(a.cod)+'</span><b>'+a.u1+' ud/mes</b></div><div class="desc">'+esc(a.desc)+'</div>'+
+      '<div class="bar"><i style="width:'+Math.round(a.u1/mx*100)+'%"></i></div><div class="badges"><span class="b">3M: '+a.u3+'</span><span class="b">Stock '+a.exist+'</span></div><div style="margin-top:6px">'+
+      a.pick.map(function(c){return '<span class="loc pk" data-loc="'+c+'">'+fmtLoc(c)+'</span>';}).join('')+'</div></div>';}).join('')+'</div>';
+  bindLocs(v);
+}
+
+/* ---------- Eventos ---------- */
+$('zA').onclick=function(){S.zone='A';S.loc='';render();};
+$('zB').onclick=function(){S.zone='B';S.loc='';render();};
+function pickFile(){$('file').click();}
+$('loadbtn').onclick=pickFile;$('ovbtn').onclick=pickFile;
+$('file').onchange=function(e){
+  var f=e.target.files[0];if(!f)return;
+  $('ov').classList.remove('hide');$('ovt').textContent='Procesando '+f.name+'…';
+  var r=new FileReader();
+  r.onload=function(){setTimeout(function(){try{loadText(decode(r.result),f.name);}catch(err){fail(err);}},30);};
+  r.readAsArrayBuffer(f);
+};
+if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('service-worker.js').catch(function(){});});}
+renderTabs();fetchCSV();
+})();
+</script>
+</body>
+</html>
